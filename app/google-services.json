@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "237929167362",
+    "project_id": "newshub-f374b",
+    "storage_bucket": "newshub-f374b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:237929167362:android:23f30fe9de4a23a667051b",
+        "android_client_info": {
+          "package_name": "com.example.mobileapp_newhub"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJSKca_YbEZItrY35-4KxS3xSI9P_39Cg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

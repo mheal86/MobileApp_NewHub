@@ -40,4 +40,26 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    // AndroidX Core
+    implementation ("androidx.appcompat:appcompat:1.6.1")
+    implementation ("com.google.android.material:material:1.11.0")
+    implementation ("androidx.constraintlayout:constraintlayout:2.1.4")
+
+    // Navigation Component
+    implementation ("androidx.navigation:navigation-fragment:2.7.6")
+    implementation ("androidx.navigation:navigation-ui:2.7.6")
+
+    // Lifecycle & ViewModel & LiveData
+    implementation ("androidx.lifecycle:lifecycle-viewmodel:2.7.0")
+    implementation ("androidx.lifecycle:lifecycle-livedata:2.7.0")
+
+    // SwipeRefreshLayout
+    implementation ("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+
+    // Glide for Image Loading
+    implementation ("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor ("com.github.bumptech.glide:compiler:4.16.0")
+
+    // RecyclerView
+    implementation ("androidx.recyclerview:recyclerview:1.3.2")
 }

@@ -1,10 +1,13 @@
-package com.example.mobileapp_newhub.ui.home;
+package com.example.mobileapp_newhub.ui.search;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -14,20 +17,19 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.mobileapp_newhub.R;
 import com.example.mobileapp_newhub.adapter.PostAdapter;
 import com.example.mobileapp_newhub.model.Post;
 import com.example.mobileapp_newhub.viewmodel.ReaderViewModel;
 
-public class HomeFragment extends Fragment {
+public class SearchFragment extends Fragment {
 
     private ReaderViewModel viewModel;
-    private RecyclerView recyclerViewPosts;
+    private EditText searchEditText;
+    private RecyclerView recyclerView;
+    private TextView emptyTextView;
     private PostAdapter postAdapter;
-    private SwipeRefreshLayout swipeRefreshLayout;
-    private ProgressBar progressBar;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -39,20 +41,20 @@ public class HomeFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_home, container, false);
+        View view = inflater.inflate(R.layout.fragment_search, container, false);
 
         initViews(view);
         setupRecyclerView();
-        observeData();
-        setupSwipeRefresh();
+        setupSearchBar();
+        observeSearchResults();
 
         return view;
     }
 
     private void initViews(View view) {
-        recyclerViewPosts = view.findViewById(R.id.recyclerViewPosts);
-        swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
-        progressBar = view.findViewById(R.id.progressBar);
+        searchEditText = view.findViewById(R.id.editTextSearch);
+        recyclerView = view.findViewById(R.id.recyclerViewSearchResults);
+        emptyTextView = view.findViewById(R.id.textViewEmpty);
     }
 
     private void setupRecyclerView() {
@@ -72,19 +74,47 @@ public class HomeFragment extends Fragment {
                 }
         );
 
-        recyclerViewPosts.setLayoutManager(new LinearLayoutManager(requireContext()));
-        recyclerViewPosts.setAdapter(postAdapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+        recyclerView.setAdapter(postAdapter);
     }
 
-    private void observeData() {
-        viewModel.getAllPosts().observe(getViewLifecycleOwner(), posts -> {
-            if (posts != null) {
-                postAdapter.setPosts(posts);
-                progressBar.setVisibility(View.GONE);
+    private void setupSearchBar() {
+        searchEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
-                if (posts.isEmpty()) {
-                    Toast.makeText(requireContext(), "Không có bài viết nào", Toast.LENGTH_SHORT).show();
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String query = s.toString().trim();
+
+                if (query.length() > 0) {
+                    viewModel.search(query);
+                    emptyTextView.setVisibility(View.GONE);
+                } else {
+                    postAdapter.setPosts(null);
+                    emptyTextView.setVisibility(View.VISIBLE);
+                    emptyTextView.setText("Nhập từ khóa để tìm kiếm");
                 }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+    }
+
+    private void observeSearchResults() {
+        viewModel.getSearchResults().observe(getViewLifecycleOwner(), posts -> {
+            if (posts != null && !posts.isEmpty()) {
+                postAdapter.setPosts(posts);
+                emptyTextView.setVisibility(View.GONE);
+                recyclerView.setVisibility(View.VISIBLE);
+            } else if (searchEditText.getText().toString().trim().length() > 0) {
+                postAdapter.setPosts(null);
+                emptyTextView.setVisibility(View.VISIBLE);
+                emptyTextView.setText("Không tìm thấy kết quả nào");
+                recyclerView.setVisibility(View.GONE);
             }
         });
 
@@ -101,17 +131,6 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    private void setupSwipeRefresh() {
-        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                viewModel.refreshPosts();
-                swipeRefreshLayout.setRefreshing(false);
-                Toast.makeText(requireContext(), "Đã làm mới", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
     private void handlePostClick(Post post) {
         viewModel.markPostAsViewed(post);
 
@@ -120,7 +139,7 @@ public class HomeFragment extends Fragment {
 
         try {
             Navigation.findNavController(requireView())
-                    .navigate(R.id.action_homeFragment_to_detailFragment, bundle);
+                    .navigate(R.id.action_searchFragment_to_detailFragment, bundle);
         } catch (Exception e) {
             Toast.makeText(requireContext(), "Không thể mở bài viết", Toast.LENGTH_SHORT).show();
         }

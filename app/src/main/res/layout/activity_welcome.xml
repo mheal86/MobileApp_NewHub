@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="#FFFFFF">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center_horizontal">
+
+        <!-- Header -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Chào mừng đến"
+            android:textColor="#212121"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:layout_marginTop="32dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="với Newhub"
+            android:textColor="#6200EE"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nền tảng quản lý tin tức và dữ liệu thế hệ mới. Vui lòng chọn vai trò truy cập của bạn để bắt đầu hành trình."
+            android:textColor="#757575"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:layout_marginBottom="40dp"
+            android:lineSpacingExtra="4dp"/>
+
+        <!-- Card: Quản trị viên (Admin) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/btnAdmin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="4dp"
+            app:strokeColor="#D32F2F"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="24dp">
+
+                <ImageView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_shield"
+                    android:background="@drawable/bg_icon_circle"
+                    android:padding="10dp"
+                    app:tint="#D32F2F"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Quản trị viên"
+                    android:textColor="#212121"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="12dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Toàn quyền quản lý hệ thống, người dùng và nội dung bài viết."
+                    android:textColor="#757575"
+                    android:textSize="12sp"
+                    android:gravity="center"
+                    android:layout_marginTop="8dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TIẾP TỤC →"
+                    android:textColor="#D32F2F"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="16dp"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Card: Người dùng (User) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/btnUser"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="4dp"
+            app:strokeColor="#1976D2"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="24dp">
+
+                <ImageView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_person"
+                    android:background="@drawable/bg_icon_circle"
+                    android:padding="10dp"
+                    app:tint="#1976D2"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Người dùng"
+                    android:textColor="#212121"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="12dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Truy cập nội dung cá nhân hóa, bình luận và lưu trữ tin tức."
+                    android:textColor="#757575"
+                    android:textSize="12sp"
+                    android:gravity="center"
+                    android:layout_marginTop="8dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TIẾP TỤC →"
+                    android:textColor="#1976D2"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="16dp"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Card: Khách (Guest) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/btnGuest"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="4dp"
+            app:strokeColor="#388E3C"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="24dp">
+
+                <ImageView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_language"
+                    android:background="@drawable/bg_icon_circle"
+                    android:padding="10dp"
+                    app:tint="#388E3C"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Khách"
+                    android:textColor="#212121"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="12dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Xem tin tức công khai và xu hướng mới nhất mà không cần đăng nhập."
+                    android:textColor="#757575"
+                    android:textSize="12sp"
+                    android:gravity="center"
+                    android:layout_marginTop="8dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TIẾP TỤC →"
+                    android:textColor="#388E3C"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="16dp"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+</ScrollView>

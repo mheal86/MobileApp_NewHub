@@ -1,5 +1,6 @@
 package com.example.mobileapp_newhub;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 
@@ -7,11 +8,13 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
+import com.example.mobileapp_newhub.auth.LoginActivity;
 import com.example.mobileapp_newhub.ui.bookmark.BookmarkFragment;
 import com.example.mobileapp_newhub.ui.category.CategoryFragment;
 import com.example.mobileapp_newhub.ui.home.HomeFragment;
 import com.example.mobileapp_newhub.ui.profile.ProfileFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -20,12 +23,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
         setContentView(R.layout.activity_main);
 
         bottomNavigationView = findViewById(R.id.bottom_nav);
 
-        // Fragment mặc định
-        loadFragment(new HomeFragment());
+        // Mặc định load Trang chủ (Home) khi vừa vào
+        if (savedInstanceState == null) {
+            loadFragment(new HomeFragment());
+        }
 
         bottomNavigationView.setOnItemSelectedListener(
                 new BottomNavigationView.OnItemSelectedListener() {

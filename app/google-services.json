@@ -1,45 +1,44 @@
 {
   "project_info": {
-    "project_number": "160162478492",
-    "project_id": "contactcloud-67016",
-    "storage_bucket": "contactcloud-67016.firebasestorage.app"
+    "project_number": "237929167362",
+    "project_id": "newshub-f374b",
+    "storage_bucket": "newshub-f374b.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:160162478492:android:abba386e037045cb93f059",
-        "android_client_info": {
-          "package_name": "com.example.bttrenlop3"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBm9yBcPI9wjjc7UkEZQcfzjeUYE-Qpkdk"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:160162478492:android:9da3b9bac800570b93f059",
+        "mobilesdk_app_id": "1:237929167362:android:23f30fe9de4a23a667051b",
         "android_client_info": {
           "package_name": "com.example.mobileapp_newhub"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "237929167362-ora06uqijqh8ddgps6nqjud8b8lb6152.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.mobileapp_newhub",
+            "certificate_hash": "6ccbd3fc3f78ddb08764e8398bc7092381b2aca4"
+          }
+        },
+        {
+          "client_id": "237929167362-3ig0gt2osin7jac0mn189pp1dlt9n9iq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyBm9yBcPI9wjjc7UkEZQcfzjeUYE-Qpkdk"
+          "current_key": "AIzaSyDJSKca_YbEZItrY35-4KxS3xSI9P_39Cg"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "237929167362-3ig0gt2osin7jac0mn189pp1dlt9n9iq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

@@ -87,7 +87,6 @@
                     android:layout_alignParentEnd="true"
                     android:orientation="horizontal">
                     
-                    <!-- Chỉ giữ lại icon chuông thông báo -->
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
@@ -167,7 +166,7 @@
                 android:paddingHorizontal="16dp"
                 android:weightSum="4">
 
-                <!-- Item 1 -->
+                <!-- Item 1: BÀI ĐÃ ĐỌC -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -178,11 +177,17 @@
                     android:padding="12dp"
                     android:layout_marginEnd="8dp">
                     <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_menu_view" app:tint="#6200EE" android:layout_marginBottom="8dp"/>
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="-" android:textStyle="bold" android:textColor="#333"/>
+                    <TextView 
+                        android:id="@+id/statViewedCount" 
+                        android:layout_width="wrap_content" 
+                        android:layout_height="wrap_content" 
+                        android:text="0" 
+                        android:textStyle="bold" 
+                        android:textColor="#333"/>
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="BÀI ĐÃ ĐỌC" android:textSize="10sp" android:textColor="#999"/>
                 </LinearLayout>
 
-                <!-- Item 2 -->
+                <!-- Item 2: ĐÃ LƯU -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -193,11 +198,17 @@
                     android:padding="12dp"
                     android:layout_marginEnd="8dp">
                     <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_menu_save" app:tint="#BB86FC" android:layout_marginBottom="8dp"/>
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="-" android:textStyle="bold" android:textColor="#333"/>
+                    <TextView 
+                        android:id="@+id/statSavedCount" 
+                        android:layout_width="wrap_content" 
+                        android:layout_height="wrap_content" 
+                        android:text="0" 
+                        android:textStyle="bold" 
+                        android:textColor="#333"/>
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ĐÃ LƯU" android:textSize="10sp" android:textColor="#999"/>
                 </LinearLayout>
 
-                <!-- Item 3 -->
+                <!-- Item 3: THEO DÕI -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -208,11 +219,17 @@
                     android:padding="12dp"
                     android:layout_marginEnd="8dp">
                     <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_menu_myplaces" app:tint="#03DAC5" android:layout_marginBottom="8dp"/>
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="-" android:textStyle="bold" android:textColor="#333"/>
+                    <TextView 
+                        android:id="@+id/statFollowingCount" 
+                        android:layout_width="wrap_content" 
+                        android:layout_height="wrap_content" 
+                        android:text="0" 
+                        android:textStyle="bold" 
+                        android:textColor="#333"/>
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="THEO DÕI" android:textSize="10sp" android:textColor="#999"/>
                 </LinearLayout>
 
-                <!-- Item 4 -->
+                <!-- Item 4: ĐÃ TẢI -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -222,7 +239,13 @@
                     android:background="@drawable/bg_stat_item"
                     android:padding="12dp">
                     <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/stat_sys_download" app:tint="#018786" android:layout_marginBottom="8dp"/>
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="-" android:textStyle="bold" android:textColor="#333"/>
+                    <TextView 
+                        android:id="@+id/statDownloadedCount" 
+                        android:layout_width="wrap_content" 
+                        android:layout_height="wrap_content" 
+                        android:text="0" 
+                        android:textStyle="bold" 
+                        android:textColor="#333"/>
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ĐÃ TẢI" android:textSize="10sp" android:textColor="#999"/>
                 </LinearLayout>
 
@@ -281,24 +304,47 @@
                     android:showDividers="middle"
                     android:paddingVertical="8dp">
 
-                    <!-- Row 1 -->
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="16dp" android:gravity="center_vertical">
+                    <!-- Row 1: Bài viết đã lưu -->
+                    <LinearLayout 
+                        android:id="@+id/rowSavedPosts"
+                        android:layout_width="match_parent" 
+                        android:layout_height="wrap_content" 
+                        android:padding="16dp" 
+                        android:gravity="center_vertical"
+                        android:clickable="true"
+                        android:background="?selectableItemBackground">
                         <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_menu_save" app:tint="#2196F3" android:layout_marginEnd="16dp"/>
                         <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Bài viết đã lưu" android:textSize="16sp" android:textColor="#333" android:textStyle="bold"/>
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="-" android:background="#F0F0F0" android:paddingHorizontal="8dp" android:paddingVertical="2dp" android:layout_marginEnd="8dp"/>
-                        <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@android:drawable/ic_media_play" app:tint="#CCC" android:rotation="0"/> <!-- Chevron placeholder -->
+                        <!-- Badge ID: txtSavedCountBadge -->
+                        <TextView android:id="@+id/txtSavedCountBadge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:background="#F0F0F0" android:paddingHorizontal="8dp" android:paddingVertical="2dp" android:layout_marginEnd="8dp"/>
+                        <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@android:drawable/ic_media_play" app:tint="#CCC" android:rotation="0"/>
                     </LinearLayout>
 
-                    <!-- Row 2 -->
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="16dp" android:gravity="center_vertical">
+                    <!-- Row 2: Bài viết đã tải -->
+                    <LinearLayout 
+                        android:id="@+id/rowDownloadedPosts"
+                        android:layout_width="match_parent" 
+                        android:layout_height="wrap_content" 
+                        android:padding="16dp" 
+                        android:gravity="center_vertical"
+                        android:clickable="true"
+                        android:background="?selectableItemBackground">
                         <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/stat_sys_download" app:tint="#009688" android:layout_marginEnd="16dp"/>
                         <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Bài viết đã tải" android:textSize="16sp" android:textColor="#333" android:textStyle="bold"/>
-                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="-" android:background="#F0F0F0" android:paddingHorizontal="8dp" android:paddingVertical="2dp" android:layout_marginEnd="8dp"/>
+                         <!-- Badge ID: txtDownloadedCountBadge -->
+                         <TextView android:id="@+id/txtDownloadedCountBadge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:background="#F0F0F0" android:paddingHorizontal="8dp" android:paddingVertical="2dp" android:layout_marginEnd="8dp"/>
                          <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@android:drawable/ic_media_play" app:tint="#CCC"/>
                     </LinearLayout>
 
-                    <!-- Row 3 -->
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="16dp" android:gravity="center_vertical">
+                    <!-- Row 3: Lịch sử đã đọc -->
+                    <LinearLayout 
+                        android:id="@+id/rowHistory"
+                        android:layout_width="match_parent" 
+                        android:layout_height="wrap_content" 
+                        android:padding="16dp" 
+                        android:gravity="center_vertical"
+                        android:clickable="true"
+                        android:background="?selectableItemBackground">
                         <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_menu_recent_history" app:tint="#9C27B0" android:layout_marginEnd="16dp"/>
                         <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Lịch sử đã đọc" android:textSize="16sp" android:textColor="#333" android:textStyle="bold"/>
                          <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@android:drawable/ic_media_play" app:tint="#CCC"/>

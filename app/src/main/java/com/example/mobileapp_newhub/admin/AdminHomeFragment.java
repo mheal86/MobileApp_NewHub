@@ -28,7 +28,7 @@ public class AdminHomeFragment extends Fragment implements AdminPostAdapter.List
     private SwipeRefreshLayout swipe;
     private RecyclerView rv;
     private ProgressBar progress;
-    private FloatingActionButton fabAdd, fabCategories;
+    private FloatingActionButton fabAdd, fabCategories, fabUsers;
 
     private AdminPostAdapter adapter;
     private final List<AdminPost> items = new ArrayList<>();
@@ -46,6 +46,7 @@ public class AdminHomeFragment extends Fragment implements AdminPostAdapter.List
         progress = view.findViewById(R.id.progress);
         fabAdd = view.findViewById(R.id.fabAdd);
         fabCategories = view.findViewById(R.id.fabCategories);
+        fabUsers = view.findViewById(R.id.fabUsers);
 
         adapter = new AdminPostAdapter(items, this);
         rv.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -59,11 +60,18 @@ public class AdminHomeFragment extends Fragment implements AdminPostAdapter.List
         });
 
         fabCategories.setOnClickListener(v -> {
-            // IMPORTANT: đổi R.id.main_container theo container thật của app bạn
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.container_main, new CategoryFragment())
                     .addToBackStack("admin_categories")
+                    .commit();
+        });
+
+        fabUsers.setOnClickListener(v -> {
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.container_main, new ManageUsersFragment())
+                    .addToBackStack("manage_users")
                     .commit();
         });
 
@@ -97,7 +105,7 @@ public class AdminHomeFragment extends Fragment implements AdminPostAdapter.List
     public void onDelete(AdminPost post) {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Xoá bài viết?")
-                .setMessage("Bài viết sẽ bị xoá vĩnh viễn. Ảnh trên Storage cũng sẽ bị xoá.")
+                .setMessage("Bài viết sẽ bị xoá vĩnh viễn.")
                 .setNegativeButton("Huỷ", null)
                 .setPositiveButton("Xoá", (d, w) -> vm.deletePost(post))
                 .show();

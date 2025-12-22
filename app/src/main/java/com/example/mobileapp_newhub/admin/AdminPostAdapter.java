@@ -4,65 +4,86 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.mobileapp_newhub.R;
 import com.example.mobileapp_newhub.admin.model.AdminPost;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class AdminPostAdapter extends RecyclerView.Adapter<AdminPostAdapter.VH> {
+
+    private final List<AdminPost> list;
+    private final Listener listener;
 
     public interface Listener {
         void onEdit(AdminPost post);
         void onDelete(AdminPost post);
     }
 
-    private final List<AdminPost> items;
-    private final Listener listener;
-
-    public AdminPostAdapter(List<AdminPost> items, Listener listener) {
-        this.items = items;
+    public AdminPostAdapter(List<AdminPost> list, Listener listener) {
+        this.list = list;
         this.listener = listener;
     }
 
     @NonNull
     @Override
     public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        // Tạm dùng layout post thường nếu chưa có layout admin riêng, 
+        // hoặc tạo item_admin_post.xml
+        // Ở đây giả định ta sẽ tạo item_admin_post.xml
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_admin_post, parent, false);
         return new VH(v);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull VH h, int position) {
-        AdminPost p = items.get(position);
-
-        h.tvTitle.setText(p.title == null ? "(no title)" : p.title);
-
-        String meta = "";
-        if (p.categoryName != null) meta += p.categoryName;
-        if (p.summary != null && !p.summary.trim().isEmpty()) meta += " • " + p.summary;
-        h.tvMeta.setText(meta);
-
-        h.btnEdit.setOnClickListener(v -> listener.onEdit(p));
-        h.btnDelete.setOnClickListener(v -> listener.onDelete(p));
+    public void onBindViewHolder(@NonNull VH holder, int position) {
+        AdminPost p = list.get(position);
+        holder.bind(p);
     }
 
     @Override
-    public int getItemCount() { return items.size(); }
+    public int getItemCount() {
+        return list.size();
+    }
 
-    static class VH extends RecyclerView.ViewHolder {
-        TextView tvTitle, tvMeta;
+    class VH extends RecyclerView.ViewHolder {
+        ImageView img;
+        TextView title, date;
         ImageButton btnEdit, btnDelete;
-        VH(@NonNull View itemView) {
+
+        public VH(@NonNull View itemView) {
             super(itemView);
-            tvTitle = itemView.findViewById(R.id.tvTitle);
-            tvMeta = itemView.findViewById(R.id.tvMeta);
+            img = itemView.findViewById(R.id.imgThumb);
+            title = itemView.findViewById(R.id.txtTitle);
+            date = itemView.findViewById(R.id.txtDate);
             btnEdit = itemView.findViewById(R.id.btnEdit);
             btnDelete = itemView.findViewById(R.id.btnDelete);
+
+            btnEdit.setOnClickListener(v -> listener.onEdit(list.get(getAdapterPosition())));
+            btnDelete.setOnClickListener(v -> listener.onDelete(list.get(getAdapterPosition())));
+        }
+
+        void bind(AdminPost p) {
+            title.setText(p.title);
+            if (p.timestamp > 0) {
+                date.setText(new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(new Date(p.timestamp)));
+            } else {
+                date.setText("");
+            }
+            if (p.imageUrl != null && !p.imageUrl.isEmpty()) {
+                Glide.with(itemView).load(p.imageUrl).centerCrop().into(img);
+            } else {
+                img.setImageResource(R.mipmap.ic_launcher);
+            }
         }
     }
 }

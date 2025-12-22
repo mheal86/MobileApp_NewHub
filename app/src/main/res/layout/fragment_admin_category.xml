@@ -5,36 +5,45 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <ProgressBar
-        android:id="@+id/progress"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_gravity="center"
-        android:visibility="gone"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Quản lý danh mục"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:layout_marginBottom="16dp">
 
         <EditText
             android:id="@+id/edtCategoryName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Tên danh mục"/>
+            android:hint="Tên danh mục mới" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnAddCategory"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Thêm"/>
+            android:text="Thêm"
+            android:layout_marginStart="8dp"/>
     </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvCategories"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:paddingTop="12dp"/>
+        android:layout_height="match_parent"/>
+
 </LinearLayout>

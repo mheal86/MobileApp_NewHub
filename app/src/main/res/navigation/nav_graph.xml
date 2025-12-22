@@ -3,42 +3,104 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/homeFragment">
+    app:startDestination="@id/nav_home">
 
+    <!-- TRANG CHỦ -->
     <fragment
-        android:id="@+id/homeFragment"
+        android:id="@+id/nav_home"
         android:name="com.example.mobileapp_newhub.ui.home.HomeFragment"
-        android:label="fragment_home"
+        android:label="Trang chủ"
         tools:layout="@layout/fragment_home">
         <action
             android:id="@+id/action_homeFragment_to_detailFragment"
             app:destination="@id/detailFragment" />
+        <!-- ACTION MỚI: Chuyển sang tìm kiếm -->
+        <action
+            android:id="@+id/action_homeFragment_to_searchFragment"
+            app:destination="@id/searchFragment" />
     </fragment>
 
+    <!-- DANH MỤC -->
     <fragment
-        android:id="@+id/searchFragment"
-        android:name="com.example.mobileapp_newhub.ui.search.SearchFragment"
-        android:label="fragment_search"
-        tools:layout="@layout/fragment_search">
+        android:id="@+id/nav_category"
+        android:name="com.example.mobileapp_newhub.ui.category.CategoryFragment"
+        android:label="Danh mục"
+        tools:layout="@layout/fragment_category">
         <action
-            android:id="@+id/action_searchFragment_to_detailFragment"
+            android:id="@+id/action_categoryFragment_to_categoryPostsFragment"
+            app:destination="@id/categoryPostsFragment" />
+    </fragment>
+
+    <!-- Màn hình danh sách bài viết theo danh mục -->
+    <fragment
+        android:id="@+id/categoryPostsFragment"
+        android:name="com.example.mobileapp_newhub.ui.category.CategoryPostsFragment"
+        android:label="Bài viết"
+        tools:layout="@layout/fragment_category_posts">
+        <action
+            android:id="@+id/action_categoryPostsFragment_to_detailFragment"
             app:destination="@id/detailFragment" />
     </fragment>
 
+    <!-- ĐÃ LƯU -->
     <fragment
-        android:id="@+id/bookmarkFragment"
+        android:id="@+id/nav_bookmark"
         android:name="com.example.mobileapp_newhub.ui.bookmark.BookmarkFragment"
-        android:label="fragment_bookmark"
+        android:label="Đã lưu"
         tools:layout="@layout/fragment_bookmark">
         <action
             android:id="@+id/action_bookmarkFragment_to_detailFragment"
             app:destination="@id/detailFragment" />
     </fragment>
 
+    <!-- CÁ NHÂN -->
+    <fragment
+        android:id="@+id/nav_profile"
+        android:name="com.example.mobileapp_newhub.ui.profile.ProfileFragment"
+        android:label="Cá nhân"
+        tools:layout="@layout/fragment_profile">
+        <action
+            android:id="@+id/action_profileFragment_to_bookmarkFragment"
+            app:destination="@id/nav_bookmark" />
+        <action
+            android:id="@+id/action_profileFragment_to_historyFragment"
+            app:destination="@id/historyFragment" />
+    </fragment>
+    
+    <!-- LỊCH SỬ -->
+    <fragment
+        android:id="@+id/historyFragment"
+        android:name="com.example.mobileapp_newhub.ui.history.HistoryFragment"
+        android:label="Lịch sử đọc"
+        tools:layout="@layout/fragment_history">
+        <action
+            android:id="@+id/action_historyFragment_to_detailFragment"
+            app:destination="@id/detailFragment" />
+    </fragment>
+
+    <!-- TÌM KIẾM -->
+    <fragment
+        android:id="@+id/searchFragment"
+        android:name="com.example.mobileapp_newhub.ui.search.SearchFragment"
+        android:label="Tìm kiếm"
+        tools:layout="@layout/fragment_search">
+        <action
+            android:id="@+id/action_searchFragment_to_detailFragment"
+            app:destination="@id/detailFragment" />
+    </fragment>
+
+    <!-- CHI TIẾT BÀI VIẾT -->
     <fragment
         android:id="@+id/detailFragment"
         android:name="com.example.mobileapp_newhub.ui.detail.DetailFragment"
-        android:label="fragment_detail"
+        android:label="Chi tiết"
         tools:layout="@layout/fragment_detail" />
+
+    <!-- CÀI ĐẶT -->
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.mobileapp_newhub.ui.setting.SettingsFragment"
+        android:label="Cài đặt"
+        tools:layout="@layout/fragment_setting" />
 
 </navigation>

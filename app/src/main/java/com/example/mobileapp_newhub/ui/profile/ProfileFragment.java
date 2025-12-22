@@ -25,12 +25,17 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+import androidx.navigation.ui.NavigationUI;
 
 import com.bumptech.glide.Glide;
 import com.example.mobileapp_newhub.R;
 import com.example.mobileapp_newhub.auth.AuthViewModel;
 import com.example.mobileapp_newhub.auth.LoginActivity;
 import com.example.mobileapp_newhub.model.User;
+import com.example.mobileapp_newhub.ui.viewmodel.ReaderViewModel;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.auth.FirebaseAuth;
@@ -42,6 +47,7 @@ import java.util.List;
 public class ProfileFragment extends Fragment {
 
     private AuthViewModel authViewModel;
+    private ReaderViewModel readerViewModel;
 
     // UI Layouts
     private NestedScrollView profileLayout;
@@ -53,6 +59,20 @@ public class ProfileFragment extends Fragment {
     private TextView emailTextView;
     private ChipGroup interestsChipGroup;
     
+    // Stats TextViews
+    private TextView statViewedCount;
+    private TextView statSavedCount;
+    private TextView statFollowingCount; // Placeholder
+    private TextView statDownloadedCount; // Placeholder
+
+    // Content Management Rows (NEW)
+    private View rowSavedPosts;
+    private View rowDownloadedPosts;
+    private View rowHistory;
+    
+    private TextView txtSavedCountBadge;
+    private TextView txtDownloadedCountBadge;
+    
     // Buttons / Clickable Layouts
     private View uploadAvatarButton; 
     private View editProfileRow;
@@ -62,23 +82,16 @@ public class ProfileFragment extends Fragment {
     // UI Elements for Guest
     private Button loginNavButton;
     
-    // Dialog UI reference (to update image inside dialog when picked)
+    // Dialog UI reference
     private ImageView dialogAvatarImageView;
 
     private final ActivityResultLauncher<PickVisualMediaRequest> pickMedia =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
                 if (uri != null) {
-                    // Update main UI
                     authViewModel.uploadAvatar(uri);
-                    
-                    // Update Dialog UI if open
                     if (dialogAvatarImageView != null) {
-                        Glide.with(requireContext())
-                                .load(uri)
-                                .circleCrop()
-                                .into(dialogAvatarImageView);
+                        Glide.with(requireContext()).load(uri).circleCrop().into(dialogAvatarImageView);
                     }
-                    
                     Toast.makeText(requireContext(), "Đang cập nhật ảnh...", Toast.LENGTH_SHORT).show();
                 }
             });
@@ -94,6 +107,7 @@ public class ProfileFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         authViewModel = new ViewModelProvider(requireActivity()).get(AuthViewModel.class);
+        readerViewModel = new ViewModelProvider(requireActivity()).get(ReaderViewModel.class);
 
         // Init Layouts
         profileLayout = view.findViewById(R.id.profileLayout);
@@ -105,6 +119,21 @@ public class ProfileFragment extends Fragment {
         emailTextView = view.findViewById(R.id.emailTextView);
         interestsChipGroup = view.findViewById(R.id.interestsChipGroup);
         
+        // Stats
+        statViewedCount = view.findViewById(R.id.statViewedCount);
+        statSavedCount = view.findViewById(R.id.statSavedCount);
+        statFollowingCount = view.findViewById(R.id.statFollowingCount);
+        statDownloadedCount = view.findViewById(R.id.statDownloadedCount);
+        
+        // Content Management Rows
+        rowSavedPosts = view.findViewById(R.id.rowSavedPosts);
+        rowDownloadedPosts = view.findViewById(R.id.rowDownloadedPosts);
+        rowHistory = view.findViewById(R.id.rowHistory);
+        
+        txtSavedCountBadge = view.findViewById(R.id.txtSavedCountBadge);
+        txtDownloadedCountBadge = view.findViewById(R.id.txtDownloadedCountBadge);
+        
+        // Settings / Account
         uploadAvatarButton = view.findViewById(R.id.uploadAvatarButton);
         editProfileRow = view.findViewById(R.id.editProfileRow);
         changePasswordRow = view.findViewById(R.id.changePasswordRow);
@@ -113,42 +142,74 @@ public class ProfileFragment extends Fragment {
         // Init Guest Views
         loginNavButton = view.findViewById(R.id.loginNavButton);
 
-        // Kiểm tra trạng thái đăng nhập ban đầu
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         updateUIState(currentUser);
 
-        // Lắng nghe thay đổi User
+        // Observers
         authViewModel.getUserLiveData().observe(getViewLifecycleOwner(), this::updateUIState);
-
-        // Lắng nghe thông tin Profile
         authViewModel.getUserProfileLiveData().observe(getViewLifecycleOwner(), user -> {
             if (user != null && FirebaseAuth.getInstance().getCurrentUser() != null) {
                 updateProfileUI(user);
             }
         });
-
         authViewModel.getErrorLiveData().observe(getViewLifecycleOwner(), error -> {
              if (error != null) {
                  Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show();
              }
         });
+        
+        // --- Observe ReaderViewModel for stats ---
+        readerViewModel.getSavedPosts().observe(getViewLifecycleOwner(), posts -> {
+            if (posts != null) {
+                String count = String.valueOf(posts.size());
+                statSavedCount.setText(count);
+                txtSavedCountBadge.setText(count);
+            } else {
+                statSavedCount.setText("0");
+                txtSavedCountBadge.setText("0");
+            }
+        });
+        
+        readerViewModel.loadHistoryPosts(); 
+        readerViewModel.getHistoryPosts().observe(getViewLifecycleOwner(), posts -> {
+             if (posts != null) {
+                 statViewedCount.setText(String.valueOf(posts.size()));
+             } else {
+                 statViewedCount.setText("0");
+             }
+        });
 
-        // Xử lý sự kiện Click
         setupClickListeners();
     }
 
     private void setupClickListeners() {
         logoutRow.setOnClickListener(v -> authViewModel.logout());
-
-        loginNavButton.setOnClickListener(v -> {
-            startActivity(new Intent(requireContext(), LoginActivity.class));
-        });
-
+        loginNavButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), LoginActivity.class)));
         uploadAvatarButton.setOnClickListener(v -> launchPhotoPicker());
-
         editProfileRow.setOnClickListener(v -> showEditProfileDialog());
-
         changePasswordRow.setOnClickListener(v -> showChangePasswordDialog());
+        
+        // --- Navigation for Content Management ---
+        rowSavedPosts.setOnClickListener(v -> {
+            // Chuyển tab BottomNavigation
+            BottomNavigationView bottomNav = requireActivity().findViewById(R.id.bottom_nav);
+            if (bottomNav != null) {
+                bottomNav.setSelectedItemId(R.id.nav_bookmark);
+            }
+        });
+        
+        rowDownloadedPosts.setOnClickListener(v -> {
+            Toast.makeText(requireContext(), "Tính năng tải bài viết đang phát triển", Toast.LENGTH_SHORT).show();
+        });
+        
+        rowHistory.setOnClickListener(v -> {
+            // SỬA: Điều hướng sang HistoryFragment
+            try {
+                Navigation.findNavController(requireView()).navigate(R.id.action_profileFragment_to_historyFragment);
+            } catch (Exception e) {
+                Toast.makeText(requireContext(), "Chưa cài đặt điều hướng lịch sử", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
     
     private void launchPhotoPicker() {
@@ -176,7 +237,6 @@ public class ProfileFragment extends Fragment {
              avatarImageView.setImageResource(R.mipmap.ic_launcher);
         }
         
-        // Update Interests Chips
         if (interestsChipGroup != null) {
             interestsChipGroup.removeAllViews();
             if (user.getInterests() != null) {
@@ -192,7 +252,6 @@ public class ProfileFragment extends Fragment {
     }
 
     private void showEditProfileDialog() {
-        // Create custom layout for dialog
         ScrollView scrollView = new ScrollView(requireContext());
         LinearLayout layout = new LinearLayout(requireContext());
         layout.setOrientation(LinearLayout.VERTICAL);
@@ -201,25 +260,21 @@ public class ProfileFragment extends Fragment {
         
         User currentUser = authViewModel.getUserProfileLiveData().getValue();
 
-        // 0. AVATAR EDIT SECTION (TOP)
+        // Avatar
         dialogAvatarImageView = new ImageView(requireContext());
-        int size = (int) (100 * getResources().getDisplayMetrics().density); // 100dp size
+        int size = (int) (100 * getResources().getDisplayMetrics().density);
         LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(size, size);
         imageParams.gravity = Gravity.CENTER_HORIZONTAL;
         imageParams.bottomMargin = (int) (16 * getResources().getDisplayMetrics().density);
         dialogAvatarImageView.setLayoutParams(imageParams);
         dialogAvatarImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
         
-        // Load current avatar
         if (currentUser != null && currentUser.getPhotoUrl() != null && !currentUser.getPhotoUrl().isEmpty()) {
             Glide.with(requireContext()).load(currentUser.getPhotoUrl()).circleCrop().into(dialogAvatarImageView);
         } else {
             dialogAvatarImageView.setImageResource(R.mipmap.ic_launcher);
         }
-        
-        // Add click listener to change avatar
         dialogAvatarImageView.setOnClickListener(v -> launchPhotoPicker());
-        
         layout.addView(dialogAvatarImageView);
         
         TextView changeAvatarHint = new TextView(requireContext());
@@ -229,14 +284,13 @@ public class ProfileFragment extends Fragment {
         changeAvatarHint.setPadding(0, 0, 0, 30);
         layout.addView(changeAvatarHint);
 
-
-        // 1. Name Input
+        // Name
         final EditText nameInput = new EditText(requireContext());
         nameInput.setHint("Tên hiển thị");
         nameInput.setText(nameTextView.getText());
         layout.addView(nameInput);
 
-        // 2. Label
+        // Interests
         TextView interestsLabel = new TextView(requireContext());
         interestsLabel.setText("Chọn sở thích:");
         interestsLabel.setPadding(0, 30, 0, 10);
@@ -244,8 +298,7 @@ public class ProfileFragment extends Fragment {
         interestsLabel.setTypeface(null, android.graphics.Typeface.BOLD);
         layout.addView(interestsLabel);
 
-        // 3. Checkboxes
-        final String[] allInterests = {"Công nghệ", "Kinh tế", "AI", "Thể thao", "Văn hóa", "Du lịch", "Ẩm thực"};
+        final String[] allInterests = {"Công nghệ", "Kinh tế", "AI", "Thể thao", "Văn hóa", "Du lịch", "Ẩm thực", "Pháp luật", "Xe 360", "Sức khỏe", "Làm đẹp", "Giải trí", "Thế giới"};
         List<CheckBox> checkBoxes = new ArrayList<>();
         
         List<String> currentInterests = (currentUser != null && currentUser.getInterests() != null) 
@@ -279,9 +332,7 @@ public class ProfileFragment extends Fragment {
                 .setNegativeButton("Hủy", null)
                 .create();
         
-        // Clean up reference when dialog closes
         dialog.setOnDismissListener(d -> dialogAvatarImageView = null);
-        
         dialog.show();
     }
 

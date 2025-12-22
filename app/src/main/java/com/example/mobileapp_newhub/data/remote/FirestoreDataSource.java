@@ -6,7 +6,6 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-// SỬA IMPORT Ở ĐÂY
 import com.google.firebase.firestore.Query;
 
 import java.util.ArrayList;
@@ -16,17 +15,18 @@ public class FirestoreDataSource {
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-    public void fetchPosts(com.google.android.gms.tasks.OnSuccessListener<List<Post>> successCallback, OnFailureListener failureCallback) {
+    public void fetchPosts(OnSuccessListener<List<Post>> successCallback, OnFailureListener failureCallback) {
         db.collection("posts")
-                // SỬA Ở ĐÂY: Dùng đúng class Query
-                .orderBy("publishedAt", Query.Direction.DESCENDING)
+                // Sắp xếp theo timestamp giảm dần (mới nhất lên đầu)
+                .orderBy("timestamp", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     List<Post> list = new ArrayList<>();
                     for (DocumentSnapshot doc : snapshot.getDocuments()) {
                         Post post = doc.toObject(Post.class);
                         if (post != null) {
-                            post.id = doc.getId();
+                            post.setId(doc.getId()); // Đảm bảo Post có setter cho Id hoặc field public
+                            // Mapping thêm các field khác nếu tên field trên Firestore khác với Model
                             list.add(post);
                         }
                     }
@@ -35,8 +35,10 @@ public class FirestoreDataSource {
                 .addOnFailureListener(failureCallback);
     }
 
-    public void fetchCategories(com.google.android.gms.tasks.OnSuccessListener<List<Category>> successCallback, OnFailureListener failureCallback) {
-        db.collection("categories").get()
+    public void fetchCategories(OnSuccessListener<List<Category>> successCallback, OnFailureListener failureCallback) {
+        db.collection("categories")
+                .orderBy("name", Query.Direction.ASCENDING)
+                .get()
                 .addOnSuccessListener(snapshot -> {
                     List<Category> list = new ArrayList<>();
                     for (DocumentSnapshot doc : snapshot.getDocuments()) {

@@ -103,14 +103,34 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             btnSave.setOnClickListener(v -> {
                 int pos = getAdapterPosition();
                 if (pos != RecyclerView.NO_POSITION && saveClickListener != null) {
-                    saveClickListener.onSaveClick(posts.get(pos));
+                    Post post = posts.get(pos);
+                    
+                    // --- OPTIMISTIC UI UPDATE ---
+                    // 1. Thay đổi trạng thái ngay lập tức trên UI/Model
+                    boolean newStatus = !post.isSaved();
+                    post.setSaved(newStatus);
+                    
+                    // 2. Cập nhật icon ngay lập tức
+                    updateSaveIcon(newStatus);
+                    
+                    // 3. Gọi callback để xử lý lưu vào DB
+                    saveClickListener.onSaveClick(post);
                 }
             });
+        }
+        
+        // Tách hàm cập nhật icon để tái sử dụng
+        void updateSaveIcon(boolean isSaved) {
+            if (isSaved) {
+                btnSave.setImageResource(android.R.drawable.star_on);
+            } else {
+                btnSave.setImageResource(android.R.drawable.star_off);
+            }
         }
 
         void bind(Post post) {
             txtTitle.setText(post.getTitle());
-            txtSummary.setText(post.getContent()); // Using content as summary for now
+            txtSummary.setText(post.getContent()); 
             
             // Adjust Font Size
             txtTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize);
@@ -139,11 +159,8 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                 imgThumb.setImageResource(R.mipmap.ic_launcher);
             }
 
-            if (post.isSaved()) {
-                btnSave.setImageResource(android.R.drawable.star_on);
-            } else {
-                btnSave.setImageResource(android.R.drawable.star_off);
-            }
+            // Gọi hàm cập nhật icon
+            updateSaveIcon(post.isSaved());
         }
     }
 }

@@ -18,7 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.mobileapp_newhub.R;
 import com.example.mobileapp_newhub.adapter.PostAdapter;
 import com.example.mobileapp_newhub.model.Post;
-import com.example.mobileapp_newhub.viewmodel.ReaderViewModel;
+import com.example.mobileapp_newhub.ui.viewmodel.ReaderViewModel;
 
 public class BookmarkFragment extends Fragment {
 
@@ -73,6 +73,15 @@ public class BookmarkFragment extends Fragment {
         recyclerView.setAdapter(postAdapter);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Không cần gọi loadSavedPosts() ở đây vì ReaderViewModel đã dùng MutableLiveData
+        // và repository.toggleBookmark cập nhật lại danh sách.
+        // Khi toggleBookmark thành công, savedPosts được setValue() mới,
+        // UI ở Fragment này sẽ tự nhận được update nhờ observe().
+    }
+
     private void observeData() {
         viewModel.getSavedPosts().observe(getViewLifecycleOwner(), posts -> {
             if (posts != null && !posts.isEmpty()) {
@@ -115,7 +124,11 @@ public class BookmarkFragment extends Fragment {
     }
 
     private void handleBookmarkClick(Post post) {
+        // Khi bấm nút lưu/bỏ lưu ở màn hình Bookmark:
+        // Logic toggleSavePost trong ViewModel sẽ gọi Repository.
+        // Repository cập nhật Firestore/Room, sau đó gọi loadSavedPosts() lại.
+        // LiveData savedPosts thay đổi -> UI tự cập nhật (xóa item khỏi list nếu bỏ lưu).
         viewModel.toggleSavePost(post);
-        Toast.makeText(requireContext(), "Đã bỏ lưu bài viết", Toast.LENGTH_SHORT).show();
+        // Toast.makeText(requireContext(), "Đang cập nhật...", Toast.LENGTH_SHORT).show();
     }
 }

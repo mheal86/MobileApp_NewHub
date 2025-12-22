@@ -16,42 +16,51 @@ import java.util.List;
 
 public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.VH> {
 
+    private final List<AdminCategory> list;
+    private final Listener listener;
+
     public interface Listener {
         void onDelete(AdminCategory c);
     }
 
-    private final List<AdminCategory> items;
-    private final Listener listener;
-
-    public CategoryAdapter(List<AdminCategory> items, Listener listener) {
-        this.items = items;
+    public CategoryAdapter(List<AdminCategory> list, Listener listener) {
+        this.list = list;
         this.listener = listener;
     }
 
     @NonNull
     @Override
     public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        // Tạm dùng item_admin_user layout hoặc tạo mới item_admin_category.xml
+        // Tạo mới cho rõ ràng
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_admin_category, parent, false);
         return new VH(v);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull VH h, int position) {
-        AdminCategory c = items.get(position);
-        h.tvName.setText(c.name == null ? "(no name)" : c.name);
-        h.btnDelete.setOnClickListener(v -> listener.onDelete(c));
+    public void onBindViewHolder(@NonNull VH holder, int position) {
+        holder.bind(list.get(position));
     }
 
     @Override
-    public int getItemCount() { return items.size(); }
+    public int getItemCount() {
+        return list.size();
+    }
 
-    static class VH extends RecyclerView.ViewHolder {
-        TextView tvName;
+    class VH extends RecyclerView.ViewHolder {
+        TextView name;
         ImageButton btnDelete;
-        VH(@NonNull View itemView) {
+
+        public VH(@NonNull View itemView) {
             super(itemView);
-            tvName = itemView.findViewById(R.id.tvName);
+            name = itemView.findViewById(R.id.txtName);
             btnDelete = itemView.findViewById(R.id.btnDelete);
+
+            btnDelete.setOnClickListener(v -> listener.onDelete(list.get(getAdapterPosition())));
+        }
+
+        void bind(AdminCategory c) {
+            name.setText(c.name);
         }
     }
 }

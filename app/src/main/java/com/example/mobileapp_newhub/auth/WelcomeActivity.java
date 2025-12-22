@@ -14,7 +14,7 @@ public class WelcomeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_welcome);
 
-        // Sử dụng View thay vì Button vì giao diện XML mới dùng MaterialCardView
+        // Sử dụng View và tìm id phù hợp với MaterialCardView trong XML
         View btnAdmin = findViewById(R.id.btnAdmin);
         View btnUser = findViewById(R.id.btnUser);
         View btnGuest = findViewById(R.id.btnGuest);

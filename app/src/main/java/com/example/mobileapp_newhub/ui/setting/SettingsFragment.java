@@ -17,7 +17,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.mobileapp_newhub.R;
-import com.example.mobileapp_newhub.viewmodel.ReaderViewModel;
+import com.example.mobileapp_newhub.ui.viewmodel.ReaderViewModel;
 
 public class SettingsFragment extends Fragment {
 
@@ -43,7 +43,8 @@ public class SettingsFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_settings, container, false);
+        // Fix: Use fragment_setting instead of fragment_settings
+        View view = inflater.inflate(R.layout.fragment_setting, container, false);
 
         initViews(view);
         setupFontSizeControl();

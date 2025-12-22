@@ -12,14 +12,20 @@ public class Mapper {
 
     public static List<PostEntity> toPostEntities(List<Post> posts) {
         List<PostEntity> list = new ArrayList<>();
+        if (posts == null) return list;
         for (Post p : posts) {
             PostEntity e = new PostEntity();
             e.id = p.id;
             e.title = p.title;
             e.content = p.content;
-            e.thumbnailUrl = p.thumbnailUrl;
+            // Map từ field mới của Post sang Entity
+            // Post dùng 'imageUrl', Entity dùng 'thumbnailUrl' (nếu Entity chưa sửa)
+            // Để an toàn, giả sử Entity vẫn dùng tên cũ, còn Post đã sửa thành imageUrl
+            e.thumbnailUrl = p.imageUrl; 
+            
             e.categoryId = p.categoryId;
-            e.publishedAt = p.publishedAt;
+            // Post dùng 'timestamp', Entity dùng 'publishedAt'
+            e.publishedAt = p.timestamp;
             list.add(e);
         }
         return list;
@@ -40,15 +46,18 @@ public class Mapper {
         p.id = e.id;
         p.title = e.title;
         p.content = e.content;
-        p.thumbnailUrl = e.thumbnailUrl;
+        // Map từ Entity sang Post
+        p.imageUrl = e.thumbnailUrl;
+        
         p.categoryId = e.categoryId;
-        p.publishedAt = e.publishedAt;
+        p.timestamp = e.publishedAt;
         return p;
     }
 
     // --- Bổ sung Mapper cho Category ---
     public static List<CategoryEntity> toCategoryEntities(List<Category> categories) {
         List<CategoryEntity> list = new ArrayList<>();
+        if (categories == null) return list;
         for (Category c : categories) {
             CategoryEntity e = new CategoryEntity();
             e.id = c.id;

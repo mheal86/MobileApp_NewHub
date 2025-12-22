@@ -41,23 +41,42 @@ public class RepositoryImpl implements Repository {
         mainThreadHandler.post(() -> callback.onSuccess(data));
     }
 
+    // --- LOGIC KIỂM TRA ĐÃ LƯU BÀI VIẾT CHƯA ---
+    private List<Post> checkBookmarkStatus(List<Post> posts) {
+        if (posts == null) return null;
+        for (Post p : posts) {
+            if (p.id != null) {
+                // Kiểm tra trong bảng Bookmark xem có ID này chưa
+                boolean isSaved = bookmarkDao.isBookmarked(p.id) > 0;
+                p.setSaved(isSaved);
+            }
+        }
+        return posts;
+    }
+
     @Override
     public void getPosts(boolean hasNetwork, OnRepositoryCallback<List<Post>> callback) {
         if (hasNetwork) {
             remote.fetchPosts(
                     posts -> executor.execute(() -> {
                         postDao.insertAll(Mapper.toPostEntities(posts));
-                        runOnMainThread(callback, posts);
+                        // SỬA: Gọi checkBookmarkStatus trước khi trả về
+                        List<Post> checkedPosts = checkBookmarkStatus(posts);
+                        runOnMainThread(callback, checkedPosts);
                     }),
                     e -> executor.execute(() -> {
                         List<Post> postsFromDb = Mapper.fromPostEntities(postDao.getPosts());
-                        runOnMainThread(callback, postsFromDb);
+                        // SỬA: Gọi checkBookmarkStatus trước khi trả về
+                        List<Post> checkedPosts = checkBookmarkStatus(postsFromDb);
+                        runOnMainThread(callback, checkedPosts);
                     })
             );
         } else {
             executor.execute(() -> {
                 List<Post> postsFromDb = Mapper.fromPostEntities(postDao.getPosts());
-                runOnMainThread(callback, postsFromDb);
+                // SỬA: Gọi checkBookmarkStatus trước khi trả về
+                List<Post> checkedPosts = checkBookmarkStatus(postsFromDb);
+                runOnMainThread(callback, checkedPosts);
             });
         }
     }
@@ -87,6 +106,11 @@ public class RepositoryImpl implements Repository {
     public void getPostDetail(String postId, OnRepositoryCallback<Post> callback) {
         executor.execute(() -> {
             Post post = Mapper.fromPostEntity(postDao.getPostById(postId));
+            // SỬA: Kiểm tra trạng thái đã lưu
+            if (post != null) {
+                boolean isSaved = bookmarkDao.isBookmarked(postId) > 0;
+                post.setSaved(isSaved);
+            }
             runOnMainThread(callback, post);
         });
     }
@@ -95,16 +119,20 @@ public class RepositoryImpl implements Repository {
     public void toggleBookmark(String postId, OnRepositoryCallback<Boolean> callback) {
         executor.execute(() -> {
             boolean isCurrentlyBookmarked = bookmarkDao.isBookmarked(postId) > 0;
+            boolean newState;
+            
             if (isCurrentlyBookmarked) {
                 bookmarkDao.removeBookmark(postId);
-                runOnMainThread(callback, false); // Trả về trạng thái mới là false
+                newState = false;
             } else {
                 BookmarkEntity b = new BookmarkEntity();
                 b.postId = postId;
                 b.bookmarkedAt = System.currentTimeMillis();
                 bookmarkDao.bookmark(b);
-                runOnMainThread(callback, true); // Trả về trạng thái mới là true
+                newState = true;
             }
+            // Trả về kết quả sau khi đã thực hiện DB xong
+            runOnMainThread(callback, newState); 
         });
     }
 
@@ -131,6 +159,10 @@ public class RepositoryImpl implements Repository {
         executor.execute(() -> {
             List<String> postIds = bookmarkDao.getBookmarkPostIds();
             List<Post> posts = Mapper.fromPostEntities(postDao.getPostsByIds(postIds));
+            // Tất nhiên là tất cả bài trong danh sách này đều đã lưu rồi
+            for(Post p : posts) {
+                p.setSaved(true);
+            }
             runOnMainThread(callback, posts);
         });
     }
@@ -140,7 +172,9 @@ public class RepositoryImpl implements Repository {
         executor.execute(() -> {
             List<String> postIds = historyDao.getHistoryPostIds();
             List<Post> posts = Mapper.fromPostEntities(postDao.getPostsByIds(postIds));
-            runOnMainThread(callback, posts);
+            // Cần kiểm tra trạng thái lưu cho cả bài trong lịch sử
+            List<Post> checkedPosts = checkBookmarkStatus(posts);
+            runOnMainThread(callback, checkedPosts);
         });
     }
 }

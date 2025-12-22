@@ -9,11 +9,11 @@ activity = "1.12.0"
 constraintlayout = "2.2.1"
 activityVersion = "1.12.2"
 firebaseFirestore = "26.0.2"
-roomRuntime = "2.8.4"
-roomKtx = "2.8.4"
+roomRuntime = "2.6.1"
+roomKtx = "2.6.1"
 appcompatVersion = "1.6.1"
 materialVersion = "1.11.0"
-firebaseBom = "33.0.0"
+firebaseBom = "33.1.2"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -26,12 +26,10 @@ constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayo
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activityVersion" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version.ref = "firebaseFirestore" }
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "roomRuntime" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "roomRuntime" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
-x_androidx-appcompat = { group = "(", name = "appcompat", version.ref = "appcompatVersion" }
-x_com-material = { group = "(", name = "material", version.ref = "materialVersion" }
-firebase-bom = { group = "platform(", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 
 [plugins]
 android-application = { id = "com.android.application", version = "8.11.1" }
 google-services = { id = "com.google.gms.google-services", version = "4.4.2" }
-

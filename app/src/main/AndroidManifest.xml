@@ -15,24 +15,33 @@
 
         <activity android:name=".auth.LoginActivity" />
         <activity android:name=".auth.RegisterActivity" />
-        <activity android:name=".auth.WelcomeActivity" />
-
-        <!-- MÀN CHI TIẾT BÀI BÁO -->
-        <activity
-            android:name=".ui.detail.ArticleDetailActivity"
-            android:exported="false" />
-
-        <!-- MÀN CHÍNH -->
-        <activity
-            android:name=".MainActivity"
+        
+        <!-- MÀN WELCOME - Đặt làm màn hình khởi chạy -->
+        <activity 
+            android:name=".auth.WelcomeActivity"
             android:exported="true">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
         </activity>
+
+        <activity
+            android:name=".ui.detail.ArticleDetailActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" /> 
+
+        <!-- THÊM ADMIN ACTIVITY -->
+        <activity 
+            android:name=".admin.AdminActivity"
+            android:exported="false"/>
+            
+        <activity
+            android:name=".admin.AddEditPostActivity"
+            android:exported="false"/>
 
     </application>
 

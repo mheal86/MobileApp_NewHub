@@ -19,7 +19,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.example.mobileapp_newhub.R;
 import com.example.mobileapp_newhub.adapter.PostAdapter;
 import com.example.mobileapp_newhub.model.Post;
-import com.example.mobileapp_newhub.viewmodel.ReaderViewModel;
+import com.example.mobileapp_newhub.ui.viewmodel.ReaderViewModel;
 
 public class HomeFragment extends Fragment {
 
@@ -28,6 +28,7 @@ public class HomeFragment extends Fragment {
     private PostAdapter postAdapter;
     private SwipeRefreshLayout swipeRefreshLayout;
     private ProgressBar progressBar;
+    private View searchBarContainer;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -45,6 +46,7 @@ public class HomeFragment extends Fragment {
         setupRecyclerView();
         observeData();
         setupSwipeRefresh();
+        setupSearch();
 
         return view;
     }
@@ -53,6 +55,19 @@ public class HomeFragment extends Fragment {
         recyclerViewPosts = view.findViewById(R.id.recyclerViewPosts);
         swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
         progressBar = view.findViewById(R.id.progressBar);
+        searchBarContainer = view.findViewById(R.id.searchBarContainer);
+    }
+
+    private void setupSearch() {
+        if (searchBarContainer != null) {
+            searchBarContainer.setOnClickListener(v -> {
+                try {
+                    Navigation.findNavController(requireView()).navigate(R.id.action_homeFragment_to_searchFragment);
+                } catch (Exception e) {
+                    Toast.makeText(requireContext(), "Chưa cài đặt điều hướng tìm kiếm", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
     }
 
     private void setupRecyclerView() {
@@ -81,10 +96,6 @@ public class HomeFragment extends Fragment {
             if (posts != null) {
                 postAdapter.setPosts(posts);
                 progressBar.setVisibility(View.GONE);
-
-                if (posts.isEmpty()) {
-                    Toast.makeText(requireContext(), "Không có bài viết nào", Toast.LENGTH_SHORT).show();
-                }
             }
         });
 
@@ -128,7 +139,5 @@ public class HomeFragment extends Fragment {
 
     private void handleSaveClick(Post post) {
         viewModel.toggleSavePost(post);
-        String message = post.isSaved() ? "Đã lưu bài viết" : "Đã bỏ lưu bài viết";
-        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
     }
 }

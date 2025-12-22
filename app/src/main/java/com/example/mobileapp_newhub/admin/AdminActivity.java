@@ -30,16 +30,6 @@ public class AdminActivity extends AppCompatActivity {
         authViewModel = new ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication()))
                 .get(AuthViewModel.class);
 
-        Button logoutButton = findViewById(R.id.logoutButton);
 
-        logoutButton.setOnClickListener(v -> {
-            authViewModel.signOut();
-            
-            // Chuyển về màn hình Welcome sau khi đăng xuất
-            Intent intent = new Intent(AdminActivity.this, WelcomeActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            finish();
-        });
     }
 }

@@ -21,7 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.mobileapp_newhub.R;
 import com.example.mobileapp_newhub.adapter.PostAdapter;
 import com.example.mobileapp_newhub.model.Post;
-import com.example.mobileapp_newhub.viewmodel.ReaderViewModel;
+import com.example.mobileapp_newhub.ui.viewmodel.ReaderViewModel;
 
 public class SearchFragment extends Fragment {
 
@@ -41,6 +41,7 @@ public class SearchFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+        // Fix: Inflate fragment_search instead of fragment_settings
         View view = inflater.inflate(R.layout.fragment_search, container, false);
 
         initViews(view);

@@ -2,8 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    android:background="#FFFFFF">
+    android:padding="16dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -13,49 +12,82 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Tạo / Sửa bài viết"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="#D32F2F"
-            android:layout_marginBottom="24dp"/>
+            android:text="Tiêu đề"
+            android:textStyle="bold" />
 
         <EditText
             android:id="@+id/edtTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Tiêu đề bài viết"
-            android:inputType="textCapSentences"
-            android:minHeight="48dp"
-            android:layout_marginBottom="16dp"/>
+            android:hint="Nhập tiêu đề bài viết" />
 
-        <EditText
-            android:id="@+id/edtImageUrl"
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Danh mục"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"/>
+
+        <Spinner
+            android:id="@+id/spinnerCategory"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Link ảnh bìa (URL)"
-            android:inputType="textUri"
-            android:minHeight="48dp"
-            android:layout_marginBottom="16dp"/>
+            android:minHeight="48dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nội dung"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"/>
 
         <EditText
             android:id="@+id/edtContent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Nội dung chi tiết"
             android:gravity="top|start"
+            android:hint="Nhập nội dung bài viết"
             android:inputType="textMultiLine"
-            android:minLines="10"
-            android:layout_marginBottom="24dp"
-            android:background="@android:drawable/edit_text"/>
+            android:minLines="5" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Ảnh bài viết"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"/>
 
         <Button
-            android:id="@+id/btnSavePost"
+            android:id="@+id/btnSelectImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Chọn ảnh"
+            android:layout_marginTop="8dp"/>
+
+        <ImageView
+            android:id="@+id/imgPreview"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="8dp"
+            android:scaleType="centerCrop"
+            android:background="#EEEEEE" />
+
+        <ProgressBar
+            android:id="@+id/progress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:layout_marginTop="16dp"/>
+
+        <Button
+            android:id="@+id/btnSave"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Lưu bài viết"
-            android:backgroundTint="#6200EE"
-            android:textColor="#FFFFFF"
-            android:minHeight="56dp"/>
+            android:backgroundTint="#4CAF50"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="24dp"/>
 
     </LinearLayout>
 </ScrollView>

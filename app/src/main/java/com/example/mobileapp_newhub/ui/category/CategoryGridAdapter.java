@@ -63,7 +63,7 @@ public class CategoryGridAdapter extends RecyclerView.Adapter<CategoryGridAdapte
             if (c.imageUrl != null && !c.imageUrl.isEmpty()) {
                 Glide.with(itemView).load(c.imageUrl).centerCrop().into(img);
             } else {
-                img.setImageResource(R.color.design_default_color_secondary);
+                img.setImageResource(R.color.placeholder_gray);
             }
         }
     }

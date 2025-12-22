@@ -1,69 +1,41 @@
 package com.example.mobileapp_newhub;
 
-import android.content.Intent;
 import android.os.Bundle;
-import android.view.MenuItem;
-
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
-
-import com.example.mobileapp_newhub.auth.LoginActivity;
-import com.example.mobileapp_newhub.ui.bookmark.BookmarkFragment;
-import com.example.mobileapp_newhub.ui.category.CategoryFragment;
-import com.example.mobileapp_newhub.ui.home.HomeFragment;
-import com.example.mobileapp_newhub.ui.profile.ProfileFragment;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.NavigationUI;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity {
 
-    private BottomNavigationView bottomNavigationView;
+    private NavController navController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
         setContentView(R.layout.activity_main);
 
-        bottomNavigationView = findViewById(R.id.bottom_nav);
+        BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_nav);
 
-        // Mặc định load Trang chủ (Home) khi vừa vào
-        if (savedInstanceState == null) {
-            loadFragment(new HomeFragment());
+        // Lấy NavController từ NavHostFragment
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.nav_host_fragment);
+
+        if (navHostFragment != null) {
+            navController = navHostFragment.getNavController();
+
+            // Kết nối BottomNavigationView với NavController
+            NavigationUI.setupWithNavController(bottomNavigationView, navController);
+            
+            // Xử lý chuyển hướng từ LoginActivity
+            if (getIntent() != null && getIntent().getBooleanExtra("navigate_to_profile", false)) {
+                navController.navigate(R.id.settingsFragment); // Tạm thời chuyển đến settings hoặc profile nếu có ID đúng
+                // Hoặc nếu bạn muốn chuyển đến tab Profile (item menu id: nav_profile -> fragment id: nav_profile?)
+                // BottomNavigationView id là nav_profile, thì graph id cũng phải là nav_profile để auto navigate.
+                // Nếu không trùng, ta phải navigate thủ công:
+                bottomNavigationView.setSelectedItemId(R.id.nav_profile);
+            }
         }
-
-        bottomNavigationView.setOnItemSelectedListener(
-                new BottomNavigationView.OnItemSelectedListener() {
-                    @Override
-                    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-
-                        Fragment fragment = null;
-                        int id = item.getItemId();
-
-                        if (id == R.id.nav_home) {
-                            fragment = new HomeFragment();
-                        } else if (id == R.id.nav_category) {
-                            fragment = new CategoryFragment();
-                        } else if (id == R.id.nav_bookmark) {
-                            fragment = new BookmarkFragment();
-                        } else if (id == R.id.nav_profile) {
-                            fragment = new ProfileFragment();
-                        }
-
-                        if (fragment != null) {
-                            loadFragment(fragment);
-                            return true;
-                        }
-                        return false;
-                    }
-                });
-    }
-
-    private void loadFragment(Fragment fragment) {
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.container_main, fragment)
-                .commit();
     }
 }

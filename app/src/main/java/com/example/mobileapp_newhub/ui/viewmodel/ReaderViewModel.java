@@ -1,101 +1,188 @@
 package com.example.mobileapp_newhub.ui.viewmodel;
 
+import android.app.Application;
+
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Transformations;
-import androidx.lifecycle.ViewModel;
 
-import com.example.mobileapp_newhub.model.Article;
+import com.example.mobileapp_newhub.data.repository.OnRepositoryCallback;
+import com.example.mobileapp_newhub.data.repository.Repository;
+import com.example.mobileapp_newhub.data.repository.RepositoryImpl;
+import com.example.mobileapp_newhub.model.Category;
+import com.example.mobileapp_newhub.model.Comment;
+import com.example.mobileapp_newhub.model.Post;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReaderViewModel extends ViewModel {
+public class ReaderViewModel extends AndroidViewModel {
 
-    // ==================== DATA ====================
+    private final Repository repository;
 
-    private final MutableLiveData<List<Article>> allArticles = new MutableLiveData<>();
-    private final MutableLiveData<List<Article>> savedArticles = new MutableLiveData<>();
-    private final MutableLiveData<List<Article>> viewedArticles = new MutableLiveData<>();
-
-    // ==================== FILTER & SEARCH ====================
-
-    private final MutableLiveData<String> selectedCategory = new MutableLiveData<>();
-    private final MutableLiveData<String> searchQuery = new MutableLiveData<>();
-
-    private final LiveData<List<Article>> categoryArticles =
-            Transformations.switchMap(selectedCategory, category -> {
-                MutableLiveData<List<Article>> result = new MutableLiveData<>();
-                List<Article> source = allArticles.getValue();
-
-                if (source == null) {
-                    result.setValue(new ArrayList<>());
-                    return result;
-                }
-
-                if (category == null || category.isEmpty()) {
-                    result.setValue(source);
-                } else {
-                    List<Article> filtered = new ArrayList<>();
-                    for (Article a : source) {
-                        if (category.equals(a.getCategory())) {
-                            filtered.add(a);
-                        }
-                    }
-                    result.setValue(filtered);
-                }
-                return result;
-            });
-
-    private final LiveData<List<Article>> searchResults =
-            Transformations.switchMap(searchQuery, query -> {
-                MutableLiveData<List<Article>> result = new MutableLiveData<>();
-                List<Article> source = allArticles.getValue();
-
-                if (source == null || query == null || query.isEmpty()) {
-                    result.setValue(new ArrayList<>());
-                    return result;
-                }
-
-                List<Article> filtered = new ArrayList<>();
-                for (Article a : source) {
-                    if (a.getTitle().toLowerCase().contains(query.toLowerCase())) {
-                        filtered.add(a);
-                    }
-                }
-                result.setValue(filtered);
-                return result;
-            });
-
-    // ==================== SETTINGS ====================
-
+    private final MutableLiveData<List<Post>> allPosts = new MutableLiveData<>();
+    private final MutableLiveData<List<Post>> savedPosts = new MutableLiveData<>();
+    private final MutableLiveData<List<Post>> historyPosts = new MutableLiveData<>();
+    private final MutableLiveData<List<Post>> searchResults = new MutableLiveData<>();
+    private final MutableLiveData<List<Category>> categories = new MutableLiveData<>();
+    
+    // LiveData cho comments của bài viết hiện tại (Giả lập)
+    private final MutableLiveData<List<Comment>> currentPostComments = new MutableLiveData<>();
+    
     private final MutableLiveData<Integer> fontSize = new MutableLiveData<>(16);
     private final MutableLiveData<Boolean> darkMode = new MutableLiveData<>(false);
 
-    // ==================== PUBLIC METHODS ====================
-
-    public void setArticles(List<Article> articles) {
-        allArticles.setValue(articles);
+    public ReaderViewModel(@NonNull Application application) {
+        super(application);
+        repository = new RepositoryImpl(application);
+        loadPosts();
+        loadSavedPosts();
+        loadCategories();
+        loadHistoryPosts();
     }
 
-    public LiveData<List<Article>> getAllArticles() {
-        return allArticles;
+    public void refreshPosts() {
+        loadPosts();
+        loadCategories();
+        loadSavedPosts();
+        loadHistoryPosts();
     }
 
-    public LiveData<List<Article>> getCategoryArticles() {
-        return categoryArticles;
+    private void loadPosts() {
+        repository.getPosts(true, new OnRepositoryCallback<List<Post>>() {
+            @Override
+            public void onSuccess(List<Post> data) {
+                allPosts.setValue(data);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                // handle error if needed
+            }
+        });
     }
 
-    public void setSelectedCategory(String category) {
-        selectedCategory.setValue(category);
+    public void loadSavedPosts() {
+        repository.getBookmarkedPosts(new OnRepositoryCallback<List<Post>>() {
+            @Override
+            public void onSuccess(List<Post> data) {
+                savedPosts.setValue(data);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+            }
+        });
     }
 
-    public LiveData<List<Article>> getSearchResults() {
+    public void loadHistoryPosts() {
+        repository.getHistoryPosts(new OnRepositoryCallback<List<Post>>() {
+            @Override
+            public void onSuccess(List<Post> data) {
+                historyPosts.setValue(data);
+            }
+            @Override
+            public void onFailure(Exception e) {
+            }
+        });
+    }
+
+    public void loadCategories() {
+        repository.getCategories(true, new OnRepositoryCallback<List<Category>>() {
+            @Override
+            public void onSuccess(List<Category> data) {
+                categories.setValue(data);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                // Handle error
+            }
+        });
+    }
+    
+    // --- COMMENT LOGIC (Giả lập) ---
+    public LiveData<List<Comment>> getCurrentPostComments() {
+        return currentPostComments;
+    }
+    
+    public void loadComments(String postId) {
+        // TODO: Kết nối API/Firebase thật ở đây
+        // Giả lập dữ liệu
+        List<Comment> mockComments = new ArrayList<>();
+        // mockComments.add(new Comment("1", "User A", null, "Bài viết hay quá!", 5, System.currentTimeMillis()));
+        currentPostComments.setValue(mockComments);
+    }
+    
+    public void addComment(String postId, Comment comment) {
+        // TODO: Gửi lên API/Firebase
+        // Giả lập thêm vào list hiện tại
+        List<Comment> current = currentPostComments.getValue();
+        if (current == null) current = new ArrayList<>();
+        current.add(0, comment); // Thêm vào đầu
+        currentPostComments.setValue(current);
+    }
+
+    public LiveData<List<Post>> getAllPosts() {
+        return allPosts;
+    }
+
+    public LiveData<List<Post>> getSavedPosts() {
+        return savedPosts;
+    }
+    
+    public LiveData<List<Post>> getHistoryPosts() {
+        return historyPosts;
+    }
+
+    public LiveData<List<Post>> getSearchResults() {
         return searchResults;
     }
 
+    public LiveData<List<Category>> getCategories() {
+        return categories;
+    }
+
     public void search(String query) {
-        searchQuery.setValue(query);
+        if (query == null || query.isEmpty()) {
+            searchResults.setValue(new ArrayList<>());
+            return;
+        }
+        
+        List<Post> currentPosts = allPosts.getValue();
+        if (currentPosts != null) {
+            List<Post> filtered = new ArrayList<>();
+            for (Post p : currentPosts) {
+                if (p.getTitle() != null && p.getTitle().toLowerCase().contains(query.toLowerCase())) {
+                    filtered.add(p);
+                }
+            }
+            searchResults.setValue(filtered);
+        }
+    }
+
+    public void markPostAsViewed(Post post) {
+        if (post != null && post.getId() != null) {
+            repository.markViewed(post.getId());
+            loadHistoryPosts();
+        }
+    }
+
+    public void toggleSavePost(Post post) {
+        if (post != null && post.getId() != null) {
+            repository.toggleBookmark(post.getId(), new OnRepositoryCallback<Boolean>() {
+                @Override
+                public void onSuccess(Boolean isSaved) {
+                    post.setSaved(isSaved);
+                    loadSavedPosts();
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                }
+            });
+        }
     }
 
     public LiveData<Integer> getFontSize() {
@@ -103,17 +190,19 @@ public class ReaderViewModel extends ViewModel {
     }
 
     public void setFontSize(int size) {
-        if (size >= 12 && size <= 24) {
-            fontSize.setValue(size);
-        }
+        fontSize.setValue(size);
     }
 
     public LiveData<Boolean> isDarkMode() {
         return darkMode;
     }
-
+    
+    public void setDarkMode(boolean enabled) {
+        darkMode.setValue(enabled);
+    }
+    
     public void toggleDarkMode() {
         Boolean current = darkMode.getValue();
-        darkMode.setValue(current == null || !current);
+        darkMode.setValue(current == null ? true : !current);
     }
 }

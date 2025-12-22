@@ -1,7 +1,6 @@
 package com.example.mobileapp_newhub.model;
 
-public class User {
-    public String uid;
+public class Category {
+    public String id;
     public String name;
-    public String email;
 }

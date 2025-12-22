@@ -21,10 +21,9 @@ import com.example.mobileapp_newhub.R;
 import com.example.mobileapp_newhub.admin.AdminActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -33,7 +32,6 @@ public class LoginActivity extends AppCompatActivity {
     private TextView tvLoginTitle, forgotPasswordTextView;
     private Button googleSignInButton;
     private LinearLayout layoutRegister;
-    private GoogleSignInClient mGoogleSignInClient;
     private String userRole;
 
     private final ActivityResultLauncher<Intent> googleSignInLauncher = registerForActivityResult(
@@ -51,13 +49,12 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // Lấy vai trò (user/admin)
         userRole = getIntent().getStringExtra("role");
         if (userRole == null) userRole = "user";
 
-        authViewModel = new ViewModelProvider(this).get(AuthViewModel.class);
+        // Cập nhật cách lấy ViewModel
+        authViewModel = new ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication())).get(AuthViewModel.class);
 
-        // Ánh xạ View
         tvLoginTitle = findViewById(R.id.tvLoginTitle);
         emailEditText = findViewById(R.id.emailEditText);
         passwordEditText = findViewById(R.id.passwordEditText);
@@ -67,52 +64,42 @@ public class LoginActivity extends AppCompatActivity {
         forgotPasswordTextView = findViewById(R.id.forgotPasswordTextView);
         TextView registerTextView = findViewById(R.id.registerTextView);
 
-        // --- CẤU HÌNH GIAO DIỆN THEO VAI TRÒ ---
         if ("admin".equals(userRole)) {
-            // Chế độ Admin
             tvLoginTitle.setText("Đăng nhập Quản trị viên");
-            
             emailEditText.setHint("ID Tài khoản");
-            emailEditText.setInputType(InputType.TYPE_CLASS_TEXT); // Cho phép nhập text thường (không bắt buộc @)
-
+            emailEditText.setInputType(InputType.TYPE_CLASS_TEXT);
             googleSignInButton.setVisibility(View.GONE);
             layoutRegister.setVisibility(View.GONE);
-            forgotPasswordTextView.setVisibility(View.GONE); // Admin thường không tự reset pass qua email
+            forgotPasswordTextView.setVisibility(View.GONE);
         } else {
-            // Chế độ User (Mặc định)
             tvLoginTitle.setText("Đăng nhập");
-            
             emailEditText.setHint("Email");
             emailEditText.setInputType(InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
-
             googleSignInButton.setVisibility(View.VISIBLE);
             layoutRegister.setVisibility(View.VISIBLE);
             forgotPasswordTextView.setVisibility(View.VISIBLE);
         }
 
-        // Cấu hình Google Sign In (chỉ dùng cho User, nhưng khởi tạo cũng không sao)
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id))
-                .requestEmail()
-                .build();
-        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
-
         loginButton.setOnClickListener(v -> {
-            String emailOrId = emailEditText.getText().toString().trim();
+            String input = emailEditText.getText().toString().trim();
             String password = passwordEditText.getText().toString().trim();
 
-            if (emailOrId.isEmpty() || password.isEmpty()) {
+            if (input.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Vui lòng nhập đủ thông tin", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // Nếu là Admin và ID không phải email, có thể cần xử lý thêm (ví dụ thêm @admin.com)
-            // Ở đây tạm thời gửi nguyên chuỗi vào authViewModel
-            authViewModel.login(emailOrId, password);
+            if ("admin".equals(userRole)) {
+                if (!input.contains("@")) {
+                    input += "@newhub.admin";
+                }
+            }
+            authViewModel.login(input, password);
         });
 
+        // ĐÃ SỬA: Gọi Intent đăng nhập Google từ ViewModel và khởi chạy
         googleSignInButton.setOnClickListener(v -> {
-            Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+            Intent signInIntent = authViewModel.getGoogleSignInIntent();
             googleSignInLauncher.launch(signInIntent);
         });
 
@@ -120,35 +107,27 @@ public class LoginActivity extends AppCompatActivity {
             startActivity(new Intent(this, RegisterActivity.class));
         });
 
-        forgotPasswordTextView.setOnClickListener(v -> {
-            showForgotPasswordDialog();
-        });
+        forgotPasswordTextView.setOnClickListener(v -> showForgotPasswordDialog());
 
-        // Quan sát kết quả Login
         authViewModel.getUserLiveData().observe(this, firebaseUser -> {
             if (firebaseUser != null) {
-                Intent intent;
                 if ("admin".equals(userRole)) {
-                    intent = new Intent(LoginActivity.this, AdminActivity.class);
+                    checkAdminRole(firebaseUser.getUid());
                 } else {
-                    intent = new Intent(LoginActivity.this, MainActivity.class);
+                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    finish();
                 }
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(intent);
-                finish();
             }
         });
 
         authViewModel.getErrorLiveData().observe(this, errorMsg -> {
-            if (errorMsg != null) {
-                Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show();
-            }
+            if (errorMsg != null) Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show();
         });
-        
+
         authViewModel.getPasswordResetLiveData().observe(this, success -> {
-            if (success != null && success) {
-                 Toast.makeText(this, "Password reset email sent.", Toast.LENGTH_LONG).show();
-            }
+            if (success != null && success) Toast.makeText(this, "Password reset email sent.", Toast.LENGTH_LONG).show();
         });
     }
 
@@ -160,7 +139,7 @@ public class LoginActivity extends AppCompatActivity {
             Toast.makeText(this, "Google sign in failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
-    
+
     private void showForgotPasswordDialog() {
         EditText resetEmail = new EditText(this);
         resetEmail.setHint("Enter your email");
@@ -170,11 +149,37 @@ public class LoginActivity extends AppCompatActivity {
                 .setView(resetEmail)
                 .setPositiveButton("Send", (dialog, which) -> {
                     String email = resetEmail.getText().toString();
-                    if (!email.isEmpty()) {
-                        authViewModel.resetPassword(email);
-                    }
+                    if (!email.isEmpty()) authViewModel.resetPassword(email);
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    private void checkAdminRole(String userId) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("users").document(userId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        String role = documentSnapshot.getString("role");
+                        if ("admin".equals(role)) {
+                            Toast.makeText(LoginActivity.this, "Xin chào Admin!", Toast.LENGTH_SHORT).show();
+                            Intent intent = new Intent(LoginActivity.this, AdminActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(intent);
+                            finish();
+                        } else {
+                            Toast.makeText(LoginActivity.this, "Tài khoản này không có quyền Admin!", Toast.LENGTH_LONG).show();
+                            authViewModel.signOut();
+                        }
+                    } else {
+                        Toast.makeText(LoginActivity.this, "Lỗi: Không tìm thấy hồ sơ người dùng.", Toast.LENGTH_SHORT).show();
+                        authViewModel.signOut();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(LoginActivity.this, "Lỗi kết nối: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    authViewModel.signOut();
+                });
     }
 }

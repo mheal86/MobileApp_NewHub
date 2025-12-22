@@ -2,48 +2,32 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:gravity="center"
     android:orientation="vertical"
-    android:padding="16dp"
-    android:background="#FAFAFA">
+    android:padding="16dp">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Admin Dashboard"
-        android:textSize="28sp"
+        android:text="Xin chào Admin!"
+        android:textSize="24sp"
         android:textStyle="bold"
-        android:textColor="#D32F2F"
-        android:layout_marginBottom="24dp"/>
+        android:textColor="#000000"/>
 
-    <Button
-        android:id="@+id/btnManagePosts"
-        android:layout_width="match_parent"
+    <TextView
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Quản lý bài viết (Duyệt/Xóa)"
-        android:padding="16dp"
-        android:layout_marginBottom="12dp"/>
+        android:text="Chức năng quản trị đang được xây dựng..."
+        android:textSize="16sp"
+        android:textColor="#666666"
+        android:layout_marginTop="8dp"/>
 
+    <!-- Tạm thời để một nút Đăng xuất để bạn có thể quay lại -->
     <Button
-        android:id="@+id/btnManageUsers"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Quản lý người dùng"
-        android:padding="16dp"
-        android:layout_marginBottom="12dp"/>
-
-    <Button
-        android:id="@+id/btnStatistics"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Thống kê hệ thống"
-        android:padding="16dp"
-        android:layout_marginBottom="24dp"/>
-
-    <Button
-        android:id="@+id/btnLogout"
-        android:layout_width="match_parent"
+        android:id="@+id/logoutButton"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Đăng xuất"
-        android:backgroundTint="#FF0000"/>
+        android:layout_marginTop="32dp"/>
 
 </LinearLayout>

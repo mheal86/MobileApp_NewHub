@@ -1,236 +1,207 @@
 package com.example.mobileapp_newhub.auth;
 
 import android.app.Application;
+import android.content.Intent;
 import android.net.Uri;
-
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.mobileapp_newhub.R;
 import com.example.mobileapp_newhub.model.User;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
-import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AuthViewModel extends AndroidViewModel {
-    private final FirebaseAuth firebaseAuth;
-    private final FirebaseFirestore firestore;
-    private final FirebaseStorage storage;
-    private final MutableLiveData<FirebaseUser> userLiveData;
-    private final MutableLiveData<User> userProfileLiveData;
-    private final MutableLiveData<String> errorLiveData;
-    private final MutableLiveData<Boolean> passwordResetLiveData;
+
+    private final FirebaseAuth mAuth;
+    private final FirebaseFirestore mDb;
+    private final GoogleSignInClient mGoogleSignInClient;
+
+    private final MutableLiveData<FirebaseUser> userLiveData = new MutableLiveData<>();
+    private final MutableLiveData<User> userProfileLiveData = new MutableLiveData<>();
+    private final MutableLiveData<String> errorLiveData = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> passwordResetLiveData = new MutableLiveData<>();
 
     public AuthViewModel(@NonNull Application application) {
         super(application);
-        firebaseAuth = FirebaseAuth.getInstance();
-        firestore = FirebaseFirestore.getInstance();
-        storage = FirebaseStorage.getInstance();
-        userLiveData = new MutableLiveData<>();
-        userProfileLiveData = new MutableLiveData<>();
-        errorLiveData = new MutableLiveData<>();
-        passwordResetLiveData = new MutableLiveData<>();
+        mAuth = FirebaseAuth.getInstance();
+        mDb = FirebaseFirestore.getInstance();
 
-        if (firebaseAuth.getCurrentUser() != null) {
-            userLiveData.postValue(firebaseAuth.getCurrentUser());
-            loadUserProfile(firebaseAuth.getCurrentUser().getUid());
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(application.getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+        mGoogleSignInClient = GoogleSignIn.getClient(application, gso);
+
+        if (mAuth.getCurrentUser() != null) {
+            userLiveData.postValue(mAuth.getCurrentUser());
+            loadUserProfile();
         }
     }
 
-    public MutableLiveData<FirebaseUser> getUserLiveData() {
-        return userLiveData;
-    }
-
-    public MutableLiveData<User> getUserProfileLiveData() {
-        return userProfileLiveData;
-    }
-
-    public MutableLiveData<String> getErrorLiveData() {
-        return errorLiveData;
-    }
-
-    public MutableLiveData<Boolean> getPasswordResetLiveData() {
-        return passwordResetLiveData;
+    // GETTERS
+    public LiveData<FirebaseUser> getUserLiveData() { return userLiveData; }
+    public LiveData<User> getUserProfileLiveData() { return userProfileLiveData; }
+    public LiveData<String> getErrorLiveData() { return errorLiveData; }
+    public LiveData<Boolean> getPasswordResetLiveData() { return passwordResetLiveData; }
+    
+    // METHOD MỚI ĐỂ LẤY GOOGLE SIGN IN INTENT
+    public Intent getGoogleSignInIntent() {
+        return mGoogleSignInClient.getSignInIntent();
     }
 
     public void login(String email, String password) {
-        firebaseAuth.signInWithEmailAndPassword(email, password)
+        mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        userLiveData.postValue(firebaseAuth.getCurrentUser());
-                        loadUserProfile(firebaseAuth.getCurrentUser().getUid());
+                        userLiveData.postValue(mAuth.getCurrentUser());
+                        loadUserProfile();
                     } else {
-                        if (task.getException() != null) {
-                            errorLiveData.postValue(task.getException().getMessage());
-                        }
-                        userLiveData.postValue(null);
+                        errorLiveData.postValue(task.getException().getMessage());
                     }
                 });
     }
 
     public void register(String email, String password, String name) {
-        firebaseAuth.createUserWithEmailAndPassword(email, password)
+        mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
-                        userLiveData.postValue(firebaseUser);
+                        FirebaseUser firebaseUser = mAuth.getCurrentUser();
                         if (firebaseUser != null) {
-                            createUserProfile(firebaseUser.getUid(), email, name, null);
+                            // Logic lưu role="user" ở đây là ĐÚNG
+                            User newUser = new User(firebaseUser.getUid(), name, email, "user", "");
+                            saveUserToFirestore(newUser);
                         }
                     } else {
+                        // Hiển thị lỗi rõ ràng hơn
                         if (task.getException() != null) {
                             errorLiveData.postValue(task.getException().getMessage());
+                        } else {
+                            errorLiveData.postValue("Đăng ký thất bại.");
                         }
-                        userLiveData.postValue(null);
                     }
                 });
     }
 
-    public void resetPassword(String email) {
-        firebaseAuth.sendPasswordResetEmail(email)
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        passwordResetLiveData.postValue(true);
-                    } else {
-                        if (task.getException() != null) {
-                            errorLiveData.postValue(task.getException().getMessage());
-                        }
-                        passwordResetLiveData.postValue(false);
-                    }
-                });
-    }
-
-    public void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
+    public void firebaseAuthWithGoogle(com.google.android.gms.auth.api.signin.GoogleSignInAccount acct) {
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
-        firebaseAuth.signInWithCredential(credential)
+        mAuth.signInWithCredential(credential)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        FirebaseUser user = firebaseAuth.getCurrentUser();
-                        userLiveData.postValue(user);
-                        if (user != null) {
-                            firestore.collection("users").document(user.getUid()).get()
-                                    .addOnCompleteListener(profileTask -> {
-                                        if (profileTask.isSuccessful()) {
-                                            DocumentSnapshot document = profileTask.getResult();
-                                            if (!document.exists()) {
-                                                createUserProfile(user.getUid(), user.getEmail(), user.getDisplayName(), user.getPhotoUrl() != null ? user.getPhotoUrl().toString() : "");
-                                            } else {
-                                                loadUserProfile(user.getUid());
-                                            }
-                                        }
-                                    });
-                        }
+                        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+                        mDb.collection("users").document(firebaseUser.getUid()).get().addOnCompleteListener(docTask -> {
+                            if (!docTask.getResult().exists()) {
+                                String photoUrl = (firebaseUser.getPhotoUrl() != null) ? firebaseUser.getPhotoUrl().toString() : "";
+                                User newUser = new User(firebaseUser.getUid(), firebaseUser.getDisplayName(), firebaseUser.getEmail(), "user", photoUrl);
+                                saveUserToFirestore(newUser);
+                            } else {
+                                userLiveData.postValue(firebaseUser);
+                                loadUserProfile();
+                            }
+                        });
                     } else {
-                        if (task.getException() != null) {
-                            errorLiveData.postValue(task.getException().getMessage());
-                        }
-                        userLiveData.postValue(null);
+                        errorLiveData.postValue(task.getException().getMessage());
                     }
                 });
-    }
-
-    private void createUserProfile(String uid, String email, String name, String photoUrl) {
-        User user = new User(uid, name, email, photoUrl != null ? photoUrl : "", "user");
-        firestore.collection("users").document(uid).set(user)
-                .addOnSuccessListener(aVoid -> userProfileLiveData.postValue(user));
-    }
-
-    private void loadUserProfile(String uid) {
-        firestore.collection("users").document(uid).get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        DocumentSnapshot document = task.getResult();
-                        if (document.exists()) {
-                            User user = document.toObject(User.class);
-                            userProfileLiveData.postValue(user);
-                        }
-                    }
-                });
-    }
-
-    public void uploadAvatar(Uri imageUri) {
-        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-        if (currentUser == null) return;
-
-        String uid = currentUser.getUid();
-        StorageReference storageRef = storage.getReference().child("avatars/" + uid + ".jpg");
-
-        storageRef.putFile(imageUri)
-                .addOnSuccessListener(taskSnapshot -> {
-                    storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
-                        String photoUrl = uri.toString();
-                        updateUserProfilePhoto(uid, photoUrl);
-                    });
-                })
-                .addOnFailureListener(e -> {
-                    errorLiveData.postValue("Failed to upload avatar: " + e.getMessage());
-                });
-    }
-
-    private void updateUserProfilePhoto(String uid, String photoUrl) {
-        firestore.collection("users").document(uid)
-                .update("photoUrl", photoUrl)
-                .addOnSuccessListener(aVoid -> {
-                    loadUserProfile(uid); // Reload to update UI
-                })
-                .addOnFailureListener(e -> errorLiveData.postValue("Failed to update profile: " + e.getMessage()));
     }
     
-    public void updateUserProfile(String newName, List<String> interests) {
-        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-        if (currentUser == null) return;
-        
-        String uid = currentUser.getUid();
-        
-        // Update Firestore
-        firestore.collection("users").document(uid)
-                .update(
-                        "name", newName,
-                        "interests", interests
-                )
-                .addOnSuccessListener(aVoid -> {
-                    loadUserProfile(uid);
-                    errorLiveData.postValue("Profile updated successfully");
-                })
-                .addOnFailureListener(e -> errorLiveData.postValue("Failed to update profile: " + e.getMessage()));
+    public void resetPassword(String email) {
+        mAuth.sendPasswordResetEmail(email)
+                .addOnCompleteListener(task -> {
+                    if(task.isSuccessful()){
+                        passwordResetLiveData.postValue(true);
+                    } else {
+                        errorLiveData.postValue(task.getException().getMessage());
+                    }
+                });
     }
 
-    // Keep old method for compatibility if needed, but better to use the new one.
-    public void updateUserName(String newName) {
-        // Redirect to new method with null interests (or keep current interests if logic allows, 
-        // but for now simpler to just update name)
-        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-        if (currentUser == null) return;
-        firestore.collection("users").document(currentUser.getUid()).update("name", newName)
-             .addOnSuccessListener(aVoid -> loadUserProfile(currentUser.getUid()));
+    private void saveUserToFirestore(User user) {
+        mDb.collection("users").document(user.getUid()).set(user)
+                .addOnSuccessListener(aVoid -> {
+                    userLiveData.postValue(mAuth.getCurrentUser());
+                    loadUserProfile();
+                })
+                .addOnFailureListener(e -> errorLiveData.postValue(e.getMessage()));
+    }
+    
+    public void uploadAvatar(Uri uri) {
+        if (mAuth.getCurrentUser() == null) return;
+        String uid = mAuth.getCurrentUser().getUid();
+        
+        StorageReference storageRef = FirebaseStorage.getInstance().getReference().child("avatars").child(uid + ".jpg");
+
+        storageRef.putFile(uri)
+                .addOnSuccessListener(taskSnapshot -> {
+                    storageRef.getDownloadUrl().addOnSuccessListener(downloadUri -> {
+                        String url = downloadUri.toString();
+                        mDb.collection("users").document(uid).update("photoUrl", url);
+                        UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder().setPhotoUri(downloadUri).build();
+                        mAuth.getCurrentUser().updateProfile(profileUpdates);
+                        loadUserProfile();
+                    });
+                })
+                .addOnFailureListener(e -> errorLiveData.postValue("Lỗi upload ảnh: " + e.getMessage()));
+    }
+
+    public void updateUserProfile(String name, List<String> interests) {
+        if (mAuth.getCurrentUser() == null) return;
+        String uid = mAuth.getCurrentUser().getUid();
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("name", name);
+        updates.put("interests", interests);
+
+        mDb.collection("users").document(uid).update(updates)
+                .addOnSuccessListener(aVoid -> loadUserProfile())
+                .addOnFailureListener(e -> errorLiveData.postValue("Lỗi cập nhật: " + e.getMessage()));
     }
 
     public void changePassword(String newPassword) {
-        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-        if (currentUser != null) {
-            currentUser.updatePassword(newPassword)
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            errorLiveData.postValue("Password updated successfully");
-                        } else {
-                            // Re-authentication might be needed if login was long ago
-                            errorLiveData.postValue("Failed to update password: " + (task.getException() != null ? task.getException().getMessage() : "Unknown error. Try logging out and in again."));
-                        }
-                    });
+        if (mAuth.getCurrentUser() != null) {
+            mAuth.getCurrentUser().updatePassword(newPassword)
+                    .addOnSuccessListener(aVoid -> errorLiveData.postValue("Đổi mật khẩu thành công"))
+                    .addOnFailureListener(e -> errorLiveData.postValue("Lỗi: " + e.getMessage()));
         }
     }
 
     public void logout() {
-        firebaseAuth.signOut();
-        userLiveData.postValue(null);
-        userProfileLiveData.postValue(null);
+        signOut();
+    }
+
+    public void signOut() {
+        mAuth.signOut();
+        mGoogleSignInClient.signOut().addOnCompleteListener(task -> {
+            userLiveData.postValue(null);
+            userProfileLiveData.postValue(null);
+        });
+    }
+
+    private void loadUserProfile() {
+        if (mAuth.getCurrentUser() != null) {
+            mDb.collection("users").document(mAuth.getCurrentUser().getUid())
+                    .get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot.exists()) {
+                            User user = documentSnapshot.toObject(User.class);
+                            userProfileLiveData.postValue(user);
+                        }
+                    });
+        }
     }
 }

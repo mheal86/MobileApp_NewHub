@@ -23,8 +23,7 @@ public class CloudinaryHelper {
             MediaManager.init(context, config);
             isInitialized = true;
         } catch (IllegalStateException e) {
-            // Đã khởi tạo rồi thì bỏ qua
-            isInitialized = true;
+             isInitialized = true;
         }
     }
 }

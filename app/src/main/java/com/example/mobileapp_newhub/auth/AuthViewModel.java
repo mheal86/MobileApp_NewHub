@@ -8,8 +8,12 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.cloudinary.android.MediaManager;
+import com.cloudinary.android.callback.ErrorInfo;
+import com.cloudinary.android.callback.UploadCallback;
 import com.example.mobileapp_newhub.R;
 import com.example.mobileapp_newhub.model.User;
+import com.example.mobileapp_newhub.utils.CloudinaryHelper; // Import Helper
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -19,8 +23,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -41,6 +44,9 @@ public class AuthViewModel extends AndroidViewModel {
         super(application);
         mAuth = FirebaseAuth.getInstance();
         mDb = FirebaseFirestore.getInstance();
+        
+        // Khởi tạo Cloudinary
+        CloudinaryHelper.init(application);
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(application.getString(R.string.default_web_client_id))
@@ -141,23 +147,57 @@ public class AuthViewModel extends AndroidViewModel {
                 .addOnFailureListener(e -> errorLiveData.postValue(e.getMessage()));
     }
     
+    // SỬA: Upload Avatar lên Cloudinary
     public void uploadAvatar(Uri uri) {
         if (mAuth.getCurrentUser() == null) return;
         String uid = mAuth.getCurrentUser().getUid();
-        
-        StorageReference storageRef = FirebaseStorage.getInstance().getReference().child("avatars").child(uid + ".jpg");
 
-        storageRef.putFile(uri)
-                .addOnSuccessListener(taskSnapshot -> {
-                    storageRef.getDownloadUrl().addOnSuccessListener(downloadUri -> {
-                        String url = downloadUri.toString();
-                        mDb.collection("users").document(uid).update("photoUrl", url);
-                        UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder().setPhotoUri(downloadUri).build();
-                        mAuth.getCurrentUser().updateProfile(profileUpdates);
-                        loadUserProfile();
-                    });
+        // Sử dụng Cloudinary MediaManager
+        MediaManager.get().upload(uri)
+                .callback(new UploadCallback() {
+                    @Override
+                    public void onStart(String requestId) {
+                        // Có thể thêm loading indicator nếu cần
+                    }
+
+                    @Override
+                    public void onProgress(String requestId, long bytes, long totalBytes) {
+                        // update progress
+                    }
+
+                    @Override
+                    public void onSuccess(String requestId, Map resultData) {
+                        // Lấy URL từ Cloudinary
+                        String imageUrl = (String) resultData.get("secure_url");
+                        if (imageUrl == null) {
+                            imageUrl = (String) resultData.get("url");
+                        }
+
+                        if (imageUrl != null) {
+                            // Cập nhật Firestore
+                            mDb.collection("users").document(uid).update("photoUrl", imageUrl);
+                            
+                            // Cập nhật Firebase Auth Profile
+                            UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                                    .setPhotoUri(Uri.parse(imageUrl))
+                                    .build();
+                            
+                            mAuth.getCurrentUser().updateProfile(profileUpdates)
+                                    .addOnCompleteListener(task -> loadUserProfile());
+                        }
+                    }
+
+                    @Override
+                    public void onError(String requestId, ErrorInfo error) {
+                        errorLiveData.postValue("Lỗi upload Cloudinary: " + error.getDescription());
+                    }
+
+                    @Override
+                    public void onReschedule(String requestId, ErrorInfo error) {
+                        //
+                    }
                 })
-                .addOnFailureListener(e -> errorLiveData.postValue("Lỗi upload ảnh: " + e.getMessage()));
+                .dispatch();
     }
 
     public void updateUserProfile(String name, List<String> interests) {

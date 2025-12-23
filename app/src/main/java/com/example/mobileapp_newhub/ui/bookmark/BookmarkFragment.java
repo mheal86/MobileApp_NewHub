@@ -1,9 +1,12 @@
 package com.example.mobileapp_newhub.ui.bookmark;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -17,8 +20,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mobileapp_newhub.R;
 import com.example.mobileapp_newhub.adapter.PostAdapter;
+import com.example.mobileapp_newhub.auth.LoginActivity;
 import com.example.mobileapp_newhub.model.Post;
 import com.example.mobileapp_newhub.ui.viewmodel.ReaderViewModel;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class BookmarkFragment extends Fragment {
 
@@ -26,6 +32,11 @@ public class BookmarkFragment extends Fragment {
     private RecyclerView recyclerView;
     private TextView emptyTextView;
     private PostAdapter postAdapter;
+    
+    // UI Layouts cho Guest
+    private View layoutLoggedIn;
+    private LinearLayout layoutGuest;
+    private Button btnBookmarkLogin;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -42,7 +53,17 @@ public class BookmarkFragment extends Fragment {
 
         initViews(view);
         setupRecyclerView();
-        observeData();
+        
+        // Kiểm tra đăng nhập
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        updateUIState(currentUser);
+
+        // Chỉ observe data nếu đã đăng nhập
+        if (currentUser != null) {
+            observeData();
+            // Đảm bảo load dữ liệu
+            viewModel.loadSavedPosts();
+        }
 
         return view;
     }
@@ -50,6 +71,25 @@ public class BookmarkFragment extends Fragment {
     private void initViews(View view) {
         recyclerView = view.findViewById(R.id.recyclerViewBookmarkedPosts);
         emptyTextView = view.findViewById(R.id.textViewEmpty);
+        
+        layoutLoggedIn = view.findViewById(R.id.layoutLoggedIn);
+        layoutGuest = view.findViewById(R.id.layoutGuest);
+        btnBookmarkLogin = view.findViewById(R.id.btnBookmarkLogin);
+        
+        btnBookmarkLogin.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), LoginActivity.class);
+            startActivity(intent);
+        });
+    }
+    
+    private void updateUIState(FirebaseUser user) {
+        if (user != null) {
+            layoutLoggedIn.setVisibility(View.VISIBLE);
+            layoutGuest.setVisibility(View.GONE);
+        } else {
+            layoutLoggedIn.setVisibility(View.GONE);
+            layoutGuest.setVisibility(View.VISIBLE);
+        }
     }
 
     private void setupRecyclerView() {
@@ -76,13 +116,19 @@ public class BookmarkFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // Không cần gọi loadSavedPosts() ở đây vì ReaderViewModel đã dùng MutableLiveData
-        // và repository.toggleBookmark cập nhật lại danh sách.
-        // Khi toggleBookmark thành công, savedPosts được setValue() mới,
-        // UI ở Fragment này sẽ tự nhận được update nhờ observe().
+        // Cập nhật lại UI khi quay lại (ví dụ sau khi đăng nhập xong)
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        updateUIState(currentUser);
+        if (currentUser != null) {
+            observeData();
+            viewModel.loadSavedPosts();
+        }
     }
 
     private void observeData() {
+        // Tránh observe nhiều lần nếu đã observe rồi (ViewModelProvider giữ instance ViewModel)
+        // Tuy nhiên với Fragment Lifecycle, observe với getViewLifecycleOwner() là an toàn.
+        
         viewModel.getSavedPosts().observe(getViewLifecycleOwner(), posts -> {
             if (posts != null && !posts.isEmpty()) {
                 postAdapter.setPosts(posts);
@@ -124,11 +170,6 @@ public class BookmarkFragment extends Fragment {
     }
 
     private void handleBookmarkClick(Post post) {
-        // Khi bấm nút lưu/bỏ lưu ở màn hình Bookmark:
-        // Logic toggleSavePost trong ViewModel sẽ gọi Repository.
-        // Repository cập nhật Firestore/Room, sau đó gọi loadSavedPosts() lại.
-        // LiveData savedPosts thay đổi -> UI tự cập nhật (xóa item khỏi list nếu bỏ lưu).
         viewModel.toggleSavePost(post);
-        // Toast.makeText(requireContext(), "Đang cập nhật...", Toast.LENGTH_SHORT).show();
     }
 }

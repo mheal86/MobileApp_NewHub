@@ -229,7 +229,22 @@ public class ReaderViewModel extends AndroidViewModel {
             repository.toggleBookmark(post.getId(), new OnRepositoryCallback<Boolean>() {
                 @Override
                 public void onSuccess(Boolean isSaved) {
+                    // Cập nhật trạng thái cho bài viết hiện tại
                     post.setSaved(isSaved);
+                    
+                    // Cập nhật lại danh sách allPosts để UI tự động render lại
+                    List<Post> currentList = allPosts.getValue();
+                    if (currentList != null) {
+                        for (Post p : currentList) {
+                            if (p.getId().equals(post.getId())) {
+                                p.setSaved(isSaved);
+                                break;
+                            }
+                        }
+                        // Bắt buộc notify observer
+                        allPosts.setValue(currentList);
+                    }
+                    
                     loadSavedPosts();
                 }
 

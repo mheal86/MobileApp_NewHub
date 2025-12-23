@@ -46,6 +46,9 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
 
+    // Cloudinary
+    implementation(libs.cloudinary.android)
+
     // Google Sign-In
     implementation("com.google.android.gms:play-services-auth:21.2.0")
 

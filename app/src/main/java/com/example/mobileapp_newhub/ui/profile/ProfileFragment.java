@@ -62,8 +62,8 @@ public class ProfileFragment extends Fragment {
     // Stats TextViews
     private TextView statViewedCount;
     private TextView statSavedCount;
-    private TextView statFollowingCount; // Placeholder
-    private TextView statDownloadedCount; // Placeholder
+    // Đã xóa statFollowingCount
+    private TextView statDownloadedCount; 
 
     // Content Management Rows (NEW)
     private View rowSavedPosts;
@@ -78,6 +78,7 @@ public class ProfileFragment extends Fragment {
     private View editProfileRow;
     private View changePasswordRow;
     private View logoutRow;
+    private View rowSettings; 
 
     // UI Elements for Guest
     private Button loginNavButton;
@@ -122,7 +123,7 @@ public class ProfileFragment extends Fragment {
         // Stats
         statViewedCount = view.findViewById(R.id.statViewedCount);
         statSavedCount = view.findViewById(R.id.statSavedCount);
-        statFollowingCount = view.findViewById(R.id.statFollowingCount);
+        // Đã xóa việc tìm view statFollowingCount
         statDownloadedCount = view.findViewById(R.id.statDownloadedCount);
         
         // Content Management Rows
@@ -135,6 +136,7 @@ public class ProfileFragment extends Fragment {
         
         // Settings / Account
         uploadAvatarButton = view.findViewById(R.id.uploadAvatarButton);
+        rowSettings = view.findViewById(R.id.rowSettings); 
         editProfileRow = view.findViewById(R.id.editProfileRow);
         changePasswordRow = view.findViewById(R.id.changePasswordRow);
         logoutRow = view.findViewById(R.id.logoutRow);
@@ -203,11 +205,19 @@ public class ProfileFragment extends Fragment {
         });
         
         rowHistory.setOnClickListener(v -> {
-            // SỬA: Điều hướng sang HistoryFragment
             try {
                 Navigation.findNavController(requireView()).navigate(R.id.action_profileFragment_to_historyFragment);
             } catch (Exception e) {
                 Toast.makeText(requireContext(), "Chưa cài đặt điều hướng lịch sử", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // --- NEW: Settings ---
+        rowSettings.setOnClickListener(v -> {
+            try {
+                Navigation.findNavController(requireView()).navigate(R.id.action_profileFragment_to_settingsFragment);
+            } catch (Exception e) {
+                Toast.makeText(requireContext(), "Chưa cài đặt điều hướng cài đặt", Toast.LENGTH_SHORT).show();
             }
         });
     }

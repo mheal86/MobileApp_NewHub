@@ -1,6 +1,6 @@
 package com.example.mobileapp_newhub.admin;
 
-import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -39,6 +39,13 @@ public class AddEditPostActivity extends AppCompatActivity {
     private ArrayAdapter<String> spinnerAdapter;
     private final List<String> categoryNames = new ArrayList<>();
 
+    // Draft SharedPreferences
+    private SharedPreferences prefs;
+    private static final String PREF_DRAFT = "post_draft";
+    private static final String KEY_TITLE = "draft_title";
+    private static final String KEY_CONTENT = "draft_content";
+    private boolean isSaveSuccess = false; // Flag to check if saved successfully
+
     private final ActivityResultLauncher<String> pickImage = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
             uri -> {
@@ -53,6 +60,8 @@ public class AddEditPostActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_edit_post);
+        
+        prefs = getSharedPreferences(PREF_DRAFT, MODE_PRIVATE);
 
         vm = new ViewModelProvider(this).get(AdminViewModel.class);
 
@@ -81,8 +90,10 @@ public class AddEditPostActivity extends AppCompatActivity {
             }
             spinnerAdapter.notifyDataSetChanged();
             
-            // Nếu đang edit, cần set selection cho spinner sau khi load xong
-            // (Đơn giản hóa: ta sẽ làm ở phần load detail nếu cần, hoặc user tự chọn lại)
+            // Re-select category if editing
+             if (postId != null) {
+                 // Logic check selection inside loadPostData...
+             }
         });
 
         // Check Add or Edit
@@ -92,6 +103,7 @@ public class AddEditPostActivity extends AppCompatActivity {
             loadPostData(postId);
         } else {
             btnSave.setText("Đăng bài");
+            restoreDraft(); // Restore draft if adding new post
         }
 
         btnSelectImg.setOnClickListener(v -> pickImage.launch("image/*"));
@@ -120,19 +132,44 @@ public class AddEditPostActivity extends AppCompatActivity {
                 Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
         });
         
-        // Quan sát khi lưu thành công thì postsLive sẽ được reload, 
-        // nhưng ở Activity này ta không observe list post.
-        // Ta cần một sự kiện success. Để đơn giản, ta observe loading. 
-        // Nếu loading chuyển từ true -> false và không có lỗi -> success (hoặc dùng SingleLiveEvent).
-        // Cách đơn giản nhất: AdminViewModel savePost gọi loadPosts khi xong.
-        // Ta có thể finish activity này.
-        // Tuy nhiên ViewModel scope ở đây là của Activity này, khác với Fragment.
-        // Nên ta cần thêm 1 LiveData success trong ViewModel hoặc callback.
-        // Sửa nhanh: Thêm logic finish vào observer loading hoặc dùng callback cho savePost.
-        // Ở đây ta sẽ check thủ công: nếu loading tắt và không có lỗi mới -> finish.
-        // (Code mẫu nên ta làm đơn giản: thêm callback vào ViewModel hoặc check loading)
+        // SỬA: Lắng nghe sự kiện lưu thành công
+        vm.saveSuccessLive.observe(this, success -> {
+            if (Boolean.TRUE.equals(success)) {
+                isSaveSuccess = true; // Đánh dấu đã lưu thành công
+                
+                // Xóa nháp ngay lập tức
+                if (postId == null) {
+                    prefs.edit().clear().apply();
+                }
+                
+                Toast.makeText(this, "Lưu bài viết thành công!", Toast.LENGTH_SHORT).show();
+                finish(); // Đóng Activity
+            }
+        });
+    }
+    
+    private void restoreDraft() {
+        String draftTitle = prefs.getString(KEY_TITLE, "");
+        String draftContent = prefs.getString(KEY_CONTENT, "");
+        if (!draftTitle.isEmpty() || !draftContent.isEmpty()) {
+            edtTitle.setText(draftTitle);
+            edtContent.setText(draftContent);
+            Toast.makeText(this, "Đã khôi phục bài viết đang soạn dở", Toast.LENGTH_SHORT).show();
+        }
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Chỉ lưu nháp khi đang thêm mới VÀ chưa lưu thành công
+        if (postId == null && !isSaveSuccess) {
+            prefs.edit()
+                .putString(KEY_TITLE, edtTitle.getText().toString())
+                .putString(KEY_CONTENT, edtContent.getText().toString())
+                .apply();
+        }
+    }
+    
     private void loadPostData(String id) {
         vm.getPost(id, p -> {
             edtTitle.setText(p.title);

@@ -10,6 +10,7 @@ import com.example.mobileapp_newhub.data.local.entity.BookmarkEntity;
 import com.example.mobileapp_newhub.data.local.entity.HistoryEntity;
 import com.example.mobileapp_newhub.data.remote.FirestoreDataSource;
 import com.example.mobileapp_newhub.model.Category;
+import com.example.mobileapp_newhub.model.Comment; // Import
 import com.example.mobileapp_newhub.model.Post;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -38,7 +39,15 @@ public class RepositoryImpl implements Repository {
     }
 
     private <T> void runOnMainThread(OnRepositoryCallback<T> callback, T data) {
-        mainThreadHandler.post(() -> callback.onSuccess(data));
+        if (callback != null) {
+            mainThreadHandler.post(() -> callback.onSuccess(data));
+        }
+    }
+
+    private <T> void runOnMainThreadError(OnRepositoryCallback<T> callback, Exception e) {
+        if (callback != null) {
+            mainThreadHandler.post(() -> callback.onFailure(e));
+        }
     }
 
     // --- LOGIC KIỂM TRA ĐÃ LƯU BÀI VIẾT CHƯA ---
@@ -176,5 +185,27 @@ public class RepositoryImpl implements Repository {
             List<Post> checkedPosts = checkBookmarkStatus(posts);
             runOnMainThread(callback, checkedPosts);
         });
+    }
+
+    // NEW: Implement Comments
+    @Override
+    public void getComments(String postId, OnRepositoryCallback<List<Comment>> callback) {
+        // Luôn fetch từ Network vì comment cần real-time
+        remote.fetchComments(
+            postId,
+            comments -> runOnMainThread(callback, comments),
+            e -> runOnMainThreadError(callback, e)
+        );
+    }
+
+    @Override
+    public void addComment(String postId, Comment comment, OnRepositoryCallback<Boolean> callback) {
+        // Đảm bảo postId được set đúng
+        comment.setPostId(postId); 
+        remote.addComment(
+            comment,
+            v -> runOnMainThread(callback, true),
+            e -> runOnMainThreadError(callback, e)
+        );
     }
 }

@@ -24,6 +24,8 @@ import com.bumptech.glide.Glide;
 import com.example.mobileapp_newhub.R;
 import com.example.mobileapp_newhub.adapter.CommentAdapter;
 import com.example.mobileapp_newhub.auth.AuthViewModel;
+import com.example.mobileapp_newhub.data.repository.OnRepositoryCallback; // Import callback
+import com.example.mobileapp_newhub.model.Category;
 import com.example.mobileapp_newhub.model.Comment;
 import com.example.mobileapp_newhub.model.Post;
 import com.example.mobileapp_newhub.model.User;
@@ -33,6 +35,7 @@ import com.google.firebase.auth.FirebaseUser;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -48,7 +51,7 @@ public class DetailFragment extends Fragment {
     private TextView categoryTextView;
     private TextView contentTextView;
     private ImageButton saveButton;
-    private ImageButton shareButton; // Nút Share mới
+    private ImageButton shareButton; 
     
     // Comments UI
     private RecyclerView rvComments;
@@ -87,10 +90,21 @@ public class DetailFragment extends Fragment {
             displayPost(currentPost);
             viewModel.markPostAsViewed(currentPost);
             viewModel.loadComments(currentPost.getId());
+            
+            viewModel.getCategories().observe(getViewLifecycleOwner(), categories -> {
+                if (categories != null && currentPost.getCategoryId() != null) {
+                    for (Category cat : categories) {
+                        if (cat.getId().equals(currentPost.getCategoryId())) {
+                            categoryTextView.setText("Danh mục: " + cat.getName());
+                            break;
+                        }
+                    }
+                }
+            });
         }
 
         setupSaveButton();
-        setupShareButton(); // Setup nút Share
+        setupShareButton(); 
         setupCommentInput();
         
         observeFontSize();
@@ -107,9 +121,8 @@ public class DetailFragment extends Fragment {
         categoryTextView = view.findViewById(R.id.textViewCategory);
         contentTextView = view.findViewById(R.id.textViewContent);
         saveButton = view.findViewById(R.id.buttonSave);
-        shareButton = view.findViewById(R.id.buttonShare); // Init Share Button
+        shareButton = view.findViewById(R.id.buttonShare); 
         
-        // Comment views
         rvComments = view.findViewById(R.id.rvComments);
         etComment = view.findViewById(R.id.etComment);
         btnSendComment = view.findViewById(R.id.btnSendComment);
@@ -135,6 +148,7 @@ public class DetailFragment extends Fragment {
 
         titleTextView.setText(post.getTitle());
         authorTextView.setText("Tác giả: " + post.getAuthor());
+        
         categoryTextView.setText("Danh mục: " + post.getCategory());
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
@@ -172,9 +186,23 @@ public class DetailFragment extends Fragment {
                 Intent shareIntent = new Intent(Intent.ACTION_SEND);
                 shareIntent.setType("text/plain");
                 
-                // Tạo nội dung chia sẻ (Tiêu đề + Link/Nội dung tóm tắt)
-                String shareBody = currentPost.getTitle() + "\n\n" + 
-                                   "Đọc bài viết tại: https://example.com/post/" + currentPost.getId(); // Giả lập link
+                String shareBody = "";
+                String plainContent = currentPost.getContent();
+                if (plainContent != null) {
+                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                        plainContent = Html.fromHtml(plainContent, Html.FROM_HTML_MODE_COMPACT).toString();
+                    } else {
+                        plainContent = Html.fromHtml(plainContent).toString();
+                    }
+                    if (plainContent.length() > 200) {
+                        plainContent = plainContent.substring(0, 200) + "...";
+                    }
+                }
+
+                shareBody = "📰 " + currentPost.getTitle().toUpperCase() + "\n\n" + 
+                            plainContent + "\n\n" + 
+                            "--- Đọc thêm trên ứng dụng NewHub ---";
+                
                 String shareSub = currentPost.getTitle();
                 
                 shareIntent.putExtra(Intent.EXTRA_SUBJECT, shareSub);
@@ -215,13 +243,30 @@ public class DetailFragment extends Fragment {
                     rating,
                     System.currentTimeMillis()
             );
-            newComment.setId(UUID.randomUUID().toString());
+            
+            // Generate ID for new comment
+            // Lưu ý: ID thật sẽ do Firestore tạo nếu không set, nhưng để an toàn có thể set trước
+            // newComment.setId(UUID.randomUUID().toString());
             
             if (currentPost != null) {
-                viewModel.addComment(currentPost.getId(), newComment);
-                etComment.setText("");
-                ratingBarInput.setRating(5.0f);
-                Toast.makeText(requireContext(), "Đã gửi bình luận!", Toast.LENGTH_SHORT).show();
+                // Disable button để tránh spam
+                btnSendComment.setEnabled(false);
+                
+                viewModel.addComment(currentPost.getId(), newComment, new OnRepositoryCallback<Boolean>() {
+                    @Override
+                    public void onSuccess(Boolean data) {
+                        etComment.setText("");
+                        ratingBarInput.setRating(5.0f);
+                        btnSendComment.setEnabled(true);
+                        Toast.makeText(requireContext(), "Đã gửi bình luận!", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        btnSendComment.setEnabled(true);
+                        Toast.makeText(requireContext(), "Lỗi gửi bình luận: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                });
             }
         });
     }

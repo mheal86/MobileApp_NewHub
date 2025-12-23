@@ -39,6 +39,17 @@
         android:layout_marginBottom="16dp"
         android:layout_marginEnd="16dp"
         android:gravity="end">
+        
+        <!-- NEW: Nút Đăng xuất -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabLogout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:src="@android:drawable/ic_lock_power_off"
+            app:backgroundTint="#E53935"
+            app:fabSize="mini"
+            android:tooltipText="Đăng xuất" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fabUsers"

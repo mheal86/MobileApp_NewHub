@@ -1,5 +1,6 @@
 package com.example.mobileapp_newhub.admin;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -63,11 +64,28 @@ public class ManageUsersFragment extends Fragment implements UserAdapter.Listene
 
     @Override
     public void onDeleteUser(AdminUser user) {
+        // SỬA: Kiểm tra nếu là Admin thì chặn xóa ngay lập tức
+        if ("admin".equalsIgnoreCase(user.role)) {
+            Toast.makeText(requireContext(), "Không thể xóa tài khoản Admin!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         new AlertDialog.Builder(requireContext())
                 .setTitle("Xoá người dùng?")
                 .setMessage("Bạn có chắc muốn xoá tài khoản này không?")
                 .setNegativeButton("Huỷ", null)
                 .setPositiveButton("Xoá", (d, w) -> vm.deleteUser(user))
                 .show();
+    }
+
+    @Override
+    public void onUserClick(AdminUser user) {
+        Intent intent = new Intent(requireContext(), AdminUserDetailActivity.class);
+        intent.putExtra("id", user.id);
+        intent.putExtra("name", user.name);
+        intent.putExtra("email", user.email);
+        intent.putExtra("role", user.role);
+        intent.putExtra("photoUrl", user.photoUrl);
+        startActivity(intent);
     }
 }

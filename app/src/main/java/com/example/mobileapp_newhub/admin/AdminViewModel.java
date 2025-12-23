@@ -7,32 +7,38 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
 
+import com.cloudinary.android.MediaManager;
+import com.cloudinary.android.callback.ErrorInfo;
+import com.cloudinary.android.callback.UploadCallback;
 import com.example.mobileapp_newhub.admin.model.AdminCategory;
 import com.example.mobileapp_newhub.admin.model.AdminPost;
 import com.example.mobileapp_newhub.admin.model.AdminUser;
+import com.example.mobileapp_newhub.utils.CloudinaryHelper; // Import CloudinaryHelper
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
 
 public class AdminViewModel extends AndroidViewModel {
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private final FirebaseStorage storage = FirebaseStorage.getInstance();
 
     public final MutableLiveData<List<AdminPost>> postsLive = new MutableLiveData<>();
     public final MutableLiveData<List<AdminCategory>> categoriesLive = new MutableLiveData<>();
     public final MutableLiveData<List<AdminUser>> usersLive = new MutableLiveData<>();
     public final MutableLiveData<Boolean> loadingLive = new MutableLiveData<>(false);
     public final MutableLiveData<String> errorLive = new MutableLiveData<>();
+    
+    // NEW: Sự kiện báo lưu thành công
+    public final MutableLiveData<Boolean> saveSuccessLive = new MutableLiveData<>();
 
     public AdminViewModel(@NonNull Application application) {
         super(application);
+        // Khởi tạo Cloudinary
+        CloudinaryHelper.init(application);
     }
 
     // --- POSTS ---
@@ -61,18 +67,49 @@ public class AdminViewModel extends AndroidViewModel {
 
     public void savePost(String id, String title, String content, String categoryId, Uri imageUri) {
         loadingLive.setValue(true);
+        saveSuccessLive.setValue(false); // Reset status
+
         if (imageUri != null) {
-            String fileName = UUID.randomUUID().toString();
-            StorageReference ref = storage.getReference().child("posts/" + fileName);
-            ref.putFile(imageUri)
-                    .addOnSuccessListener(task -> ref.getDownloadUrl().addOnSuccessListener(uri -> {
-                        savePostToFirestore(id, title, content, categoryId, uri.toString());
-                    }))
-                    .addOnFailureListener(e -> {
-                        errorLive.setValue("Lỗi upload ảnh: " + e.getMessage());
-                        loadingLive.setValue(false);
-                    });
+            // Upload ảnh lên Cloudinary
+            MediaManager.get().upload(imageUri)
+                    .callback(new UploadCallback() {
+                        @Override
+                        public void onStart(String requestId) {
+                            // Bắt đầu upload
+                        }
+
+                        @Override
+                        public void onProgress(String requestId, long bytes, long totalBytes) {
+                            // Tiến trình upload
+                        }
+
+                        @Override
+                        public void onSuccess(String requestId, Map resultData) {
+                            // Upload thành công, lấy URL
+                            String imageUrl = (String) resultData.get("secure_url"); // Lấy link HTTPS
+                            if (imageUrl == null) {
+                                imageUrl = (String) resultData.get("url"); // Fallback link HTTP
+                            }
+                            
+                            // Lưu vào Firestore
+                            savePostToFirestore(id, title, content, categoryId, imageUrl);
+                        }
+
+                        @Override
+                        public void onError(String requestId, ErrorInfo error) {
+                            // Upload lỗi
+                            errorLive.postValue("Lỗi upload ảnh Cloudinary: " + error.getDescription());
+                            loadingLive.postValue(false);
+                        }
+
+                        @Override
+                        public void onReschedule(String requestId, ErrorInfo error) {
+                           //
+                        }
+                    })
+                    .dispatch();
         } else {
+            // Không có ảnh mới, chỉ lưu text
             savePostToFirestore(id, title, content, categoryId, null);
         }
     }
@@ -84,11 +121,6 @@ public class AdminViewModel extends AndroidViewModel {
         p.categoryId = categoryId;
         p.timestamp = System.currentTimeMillis();
         
-        // Nếu edit và không chọn ảnh mới thì giữ nguyên ảnh cũ (cần logic xử lý riêng ở Activity, 
-        // nhưng ở đây ta giả định nếu imageUrl != null thì update, null thì giữ nguyên nếu đã có)
-        // Cách đơn giản nhất: query cái cũ ra hoặc truyền url cũ vào. 
-        // Ở đây để đơn giản, ta dùng update từng field nếu id != null
-        
         if (id != null) {
             // Update
             db.collection("posts").document(id)
@@ -99,6 +131,7 @@ public class AdminViewModel extends AndroidViewModel {
                          }
                          loadPosts();
                          loadingLive.setValue(false);
+                         saveSuccessLive.setValue(true); // Notify success
                     })
                     .addOnFailureListener(e -> {
                         errorLive.setValue("Lỗi cập nhật: " + e.getMessage());
@@ -111,6 +144,7 @@ public class AdminViewModel extends AndroidViewModel {
                     .addOnSuccessListener(doc -> {
                         loadPosts();
                         loadingLive.setValue(false);
+                        saveSuccessLive.setValue(true); // Notify success
                     })
                     .addOnFailureListener(e -> {
                         errorLive.setValue("Lỗi thêm mới: " + e.getMessage());

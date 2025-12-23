@@ -23,6 +23,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.VH> {
 
     public interface Listener {
         void onDeleteUser(AdminUser user);
+        void onUserClick(AdminUser user);
     }
 
     public UserAdapter(List<AdminUser> list, Listener listener) {
@@ -61,6 +62,8 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.VH> {
             btnDelete = itemView.findViewById(R.id.btnDelete);
 
             btnDelete.setOnClickListener(v -> listener.onDeleteUser(list.get(getAdapterPosition())));
+            
+            itemView.setOnClickListener(v -> listener.onUserClick(list.get(getAdapterPosition())));
         }
 
         void bind(AdminUser u) {
@@ -72,6 +75,15 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.VH> {
                 Glide.with(itemView).load(u.photoUrl).circleCrop().into(img);
             } else {
                 img.setImageResource(R.mipmap.ic_launcher_round);
+            }
+
+            // SỬA: Nếu là admin thì ẩn nút xóa
+            if ("admin".equalsIgnoreCase(u.role)) {
+                btnDelete.setVisibility(View.INVISIBLE); // Dùng INVISIBLE để giữ khoảng cách hoặc GONE để ẩn hẳn
+                btnDelete.setEnabled(false);
+            } else {
+                btnDelete.setVisibility(View.VISIBLE);
+                btnDelete.setEnabled(true);
             }
         }
     }

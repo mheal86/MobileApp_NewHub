@@ -43,6 +43,11 @@
             android:name=".admin.AddEditPostActivity"
             android:exported="false"/>
 
+        <!-- Activity chi tiết người dùng cho Admin -->
+        <activity 
+            android:name=".admin.AdminUserDetailActivity"
+            android:exported="false"/>
+
     </application>
 
 </manifest>

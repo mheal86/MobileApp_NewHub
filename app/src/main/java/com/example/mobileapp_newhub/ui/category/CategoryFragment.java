@@ -1,5 +1,9 @@
 package com.example.mobileapp_newhub.ui.category;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,8 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.mobileapp_newhub.R;
 import com.example.mobileapp_newhub.model.Category;
 import com.example.mobileapp_newhub.ui.viewmodel.ReaderViewModel;
-
-import java.util.ArrayList;
+import com.example.mobileapp_newhub.utils.NetworkUtils;
 
 public class CategoryFragment extends Fragment {
 
@@ -28,6 +31,10 @@ public class CategoryFragment extends Fragment {
     private RecyclerView rvCategories;
     private ProgressBar progressBar;
     private TextView emptyView;
+
+    // Biến để quản lý lắng nghe mạng
+    private ConnectivityManager connectivityManager;
+    private ConnectivityManager.NetworkCallback networkCallback;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -46,7 +53,7 @@ public class CategoryFragment extends Fragment {
         progressBar = view.findViewById(R.id.progressBar);
         emptyView = view.findViewById(R.id.emptyView);
 
-        rvCategories.setLayoutManager(new GridLayoutManager(requireContext(), 2)); // 2 cột
+        rvCategories.setLayoutManager(new GridLayoutManager(requireContext(), 2));
 
         viewModel.getCategories().observe(getViewLifecycleOwner(), categories -> {
             progressBar.setVisibility(View.GONE);
@@ -61,20 +68,67 @@ public class CategoryFragment extends Fragment {
             }
         });
         
-        viewModel.loadCategories();
+        // Load lần đầu tiên
+        viewModel.loadCategories(NetworkUtils.isNetworkAvailable(requireContext()));
 
         return view;
     }
 
-    private void onCategoryClick(Category category) {
-        // Điều hướng sang màn hình danh sách bài viết theo danh mục
-        // Cần tạo CategoryPostsFragment và action trong nav_graph
-        // Tạm thời thông báo
-        // Toast.makeText(requireContext(), "Clicked: " + category.name, Toast.LENGTH_SHORT).show();
+    @Override
+    public void onResume() {
+        super.onResume();
+        registerNetworkCallback();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        unregisterNetworkCallback();
+    }
+
+    // Đăng ký lắng nghe sự kiện mạng
+    private void registerNetworkCallback() {
+        if (getContext() == null) return;
         
+        // Chỉ hỗ trợ từ Android N (API 24) trở lên
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            connectivityManager = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (connectivityManager != null) {
+                networkCallback = new ConnectivityManager.NetworkCallback() {
+                    @Override
+                    public void onAvailable(@NonNull Network network) {
+                        super.onAvailable(network);
+                        // Khi có mạng -> Load lại dữ liệu mới nhất (true)
+                        if (getActivity() != null) {
+                            getActivity().runOnUiThread(() -> {
+                                viewModel.loadCategories(true);
+                            });
+                        }
+                    }
+                };
+                try {
+                    connectivityManager.registerDefaultNetworkCallback(networkCallback);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    // Hủy đăng ký để tránh lỗi
+    private void unregisterNetworkCallback() {
+        if (connectivityManager != null && networkCallback != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            try {
+                connectivityManager.unregisterNetworkCallback(networkCallback);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void onCategoryClick(Category category) {
         Bundle bundle = new Bundle();
         bundle.putSerializable("category", category);
-        // Kiểm tra xem action có tồn tại chưa, nếu chưa thì catch
         try {
              Navigation.findNavController(requireView()).navigate(R.id.action_categoryFragment_to_categoryPostsFragment, bundle);
         } catch (Exception e) {

@@ -17,6 +17,8 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.mobileapp_newhub.R;
 import com.example.mobileapp_newhub.admin.model.AdminPost;
+import com.example.mobileapp_newhub.auth.AuthViewModel; // Import AuthViewModel
+import com.example.mobileapp_newhub.auth.WelcomeActivity; // Import WelcomeActivity
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
@@ -25,10 +27,12 @@ import java.util.List;
 public class AdminHomeFragment extends Fragment implements AdminPostAdapter.Listener {
 
     private AdminViewModel vm;
+    private AuthViewModel authViewModel; // Thêm AuthViewModel
+    
     private SwipeRefreshLayout swipe;
     private RecyclerView rv;
     private ProgressBar progress;
-    private FloatingActionButton fabAdd, fabCategories, fabUsers;
+    private FloatingActionButton fabAdd, fabCategories, fabUsers, fabLogout; // Thêm fabLogout
 
     private AdminPostAdapter adapter;
     private final List<AdminPost> items = new ArrayList<>();
@@ -40,6 +44,7 @@ public class AdminHomeFragment extends Fragment implements AdminPostAdapter.List
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         vm = new ViewModelProvider(this).get(AdminViewModel.class);
+        authViewModel = new ViewModelProvider(requireActivity()).get(AuthViewModel.class); // Init AuthViewModel
 
         swipe = view.findViewById(R.id.swipe);
         rv = view.findViewById(R.id.rvPosts);
@@ -47,6 +52,7 @@ public class AdminHomeFragment extends Fragment implements AdminPostAdapter.List
         fabAdd = view.findViewById(R.id.fabAdd);
         fabCategories = view.findViewById(R.id.fabCategories);
         fabUsers = view.findViewById(R.id.fabUsers);
+        fabLogout = view.findViewById(R.id.fabLogout); // Find fabLogout
 
         adapter = new AdminPostAdapter(items, this);
         rv.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -74,6 +80,23 @@ public class AdminHomeFragment extends Fragment implements AdminPostAdapter.List
                     .addToBackStack("manage_users")
                     .commit();
         });
+        
+        // Setup sự kiện đăng xuất
+        fabLogout.setOnClickListener(v -> {
+            new AlertDialog.Builder(requireContext())
+                .setTitle("Đăng xuất")
+                .setMessage("Bạn có chắc chắn muốn đăng xuất quyền Admin?")
+                .setNegativeButton("Hủy", null)
+                .setPositiveButton("Đăng xuất", (dialog, which) -> {
+                    authViewModel.logout();
+                    // Chuyển về màn hình Welcome
+                    Intent intent = new Intent(requireContext(), WelcomeActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    requireActivity().finish();
+                })
+                .show();
+        });
 
         vm.postsLive.observe(getViewLifecycleOwner(), list -> {
             items.clear();
@@ -91,7 +114,17 @@ public class AdminHomeFragment extends Fragment implements AdminPostAdapter.List
                 Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
         });
 
-        vm.loadPosts();
+        // Load lần đầu (có thể giữ hoặc bỏ nếu onResume đã gọi)
+        // vm.loadPosts(); 
+    }
+
+    // SỬA: Thêm onResume để tự động load lại danh sách khi quay lại màn hình này
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (vm != null) {
+            vm.loadPosts();
+        }
     }
 
     @Override

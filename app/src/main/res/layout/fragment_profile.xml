@@ -164,7 +164,7 @@
                 android:background="@android:color/white"
                 android:paddingBottom="24dp"
                 android:paddingHorizontal="16dp"
-                android:weightSum="4">
+                android:weightSum="3">
 
                 <!-- Item 1: BÀI ĐÃ ĐỌC -->
                 <LinearLayout
@@ -208,28 +208,7 @@
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ĐÃ LƯU" android:textSize="10sp" android:textColor="#999"/>
                 </LinearLayout>
 
-                <!-- Item 3: THEO DÕI -->
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:background="@drawable/bg_stat_item"
-                    android:padding="12dp"
-                    android:layout_marginEnd="8dp">
-                    <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_menu_myplaces" app:tint="#03DAC5" android:layout_marginBottom="8dp"/>
-                    <TextView 
-                        android:id="@+id/statFollowingCount" 
-                        android:layout_width="wrap_content" 
-                        android:layout_height="wrap_content" 
-                        android:text="0" 
-                        android:textStyle="bold" 
-                        android:textColor="#333"/>
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="THEO DÕI" android:textSize="10sp" android:textColor="#999"/>
-                </LinearLayout>
-
-                <!-- Item 4: ĐÃ TẢI -->
+                <!-- Item 3: ĐÃ TẢI (Previous Item 4 moved here) -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -379,6 +358,15 @@
                     android:divider="@drawable/divider"
                     android:showDividers="middle">
                     
+                    <!-- NEW: Settings Row -->
+                    <LinearLayout 
+                        android:id="@+id/rowSettings"
+                        android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="16dp" android:gravity="center_vertical" android:clickable="true" android:background="?selectableItemBackground">
+                        <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_menu_preferences" app:tint="#607D8B" android:layout_marginEnd="16dp"/>
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Cài đặt" android:textSize="16sp" android:textColor="#333" android:textStyle="bold"/>
+                         <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@android:drawable/ic_media_play" app:tint="#CCC"/>
+                    </LinearLayout>
+                    
                     <!-- Edit Name / Privacy -->
                     <LinearLayout 
                         android:id="@+id/editProfileRow"
@@ -406,35 +394,6 @@
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
-
-            <!-- ĐỌC GẦN ĐÂY -->
-             <LinearLayout
-                 android:layout_width="match_parent"
-                 android:layout_height="wrap_content"
-                 android:orientation="horizontal"
-                 android:paddingHorizontal="20dp"
-                 android:layout_marginTop="24dp"
-                 android:layout_marginBottom="12dp">
-                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="ĐỌC GẦN ĐÂY" android:textStyle="bold" android:textColor="#999" android:textSize="13sp"/>
-                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Xem tất cả" android:textColor="#2196F3" android:textSize="13sp"/>
-             </LinearLayout>
-             
-             <!-- Dummy Recent Article Item -->
-             <LinearLayout
-                 android:layout_width="match_parent"
-                 android:layout_height="wrap_content"
-                 android:orientation="horizontal"
-                 android:padding="16dp"
-                 android:background="@android:color/white">
-                 <androidx.cardview.widget.CardView android:layout_width="80dp" android:layout_height="60dp" app:cardCornerRadius="8dp">
-                     <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@mipmap/ic_launcher" android:scaleType="centerCrop"/>
-                 </androidx.cardview.widget.CardView>
-                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginStart="12dp" android:gravity="center_vertical">
-                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="CÔNG NGHỆ" android:textColor="#2196F3" android:textSize="10sp" android:textStyle="bold"/>
-                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tương lai của AI trong năm 2025" android:textSize="14sp" android:textStyle="bold" android:textColor="#333" android:maxLines="2" android:ellipsize="end"/>
-                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="2 phút trước" android:textSize="12sp" android:textColor="#999" android:layout_marginTop="4dp"/>
-                 </LinearLayout>
-             </LinearLayout>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

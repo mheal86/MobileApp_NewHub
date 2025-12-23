@@ -65,6 +65,10 @@
         <action
             android:id="@+id/action_profileFragment_to_historyFragment"
             app:destination="@id/historyFragment" />
+        <!-- ACTION MỚI: Chuyển sang cài đặt -->
+        <action
+            android:id="@+id/action_profileFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
     </fragment>
     
     <!-- LỊCH SỬ -->

@@ -104,22 +104,12 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                 int pos = getAdapterPosition();
                 if (pos != RecyclerView.NO_POSITION && saveClickListener != null) {
                     Post post = posts.get(pos);
-                    
-                    // --- OPTIMISTIC UI UPDATE ---
-                    // 1. Thay đổi trạng thái ngay lập tức trên UI/Model
-                    boolean newStatus = !post.isSaved();
-                    post.setSaved(newStatus);
-                    
-                    // 2. Cập nhật icon ngay lập tức
-                    updateSaveIcon(newStatus);
-                    
-                    // 3. Gọi callback để xử lý lưu vào DB
+                    // Không tự ý thay đổi trạng thái UI ở đây, để ViewModel quyết định
                     saveClickListener.onSaveClick(post);
                 }
             });
         }
         
-        // Tách hàm cập nhật icon để tái sử dụng
         void updateSaveIcon(boolean isSaved) {
             if (isSaved) {
                 btnSave.setImageResource(android.R.drawable.star_on);
@@ -132,11 +122,9 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             txtTitle.setText(post.getTitle());
             txtSummary.setText(post.getContent()); 
             
-            // Adjust Font Size
             txtTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize);
             txtSummary.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize - 2);
             
-            // Dark Mode
             if (isDarkMode) {
                 cardView.setCardBackgroundColor(Color.DKGRAY);
                 txtTitle.setTextColor(Color.WHITE);
@@ -159,7 +147,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                 imgThumb.setImageResource(R.mipmap.ic_launcher);
             }
 
-            // Gọi hàm cập nhật icon
             updateSaveIcon(post.isSaved());
         }
     }

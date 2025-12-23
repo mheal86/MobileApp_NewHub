@@ -8,6 +8,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -75,5 +76,27 @@ public class CategoryFragment extends Fragment implements CategoryAdapter.Listen
     @Override
     public void onDelete(AdminCategory c) {
         vm.deleteCategory(c);
+    }
+
+    @Override
+    public void onEdit(AdminCategory c) {
+        // Hiển thị Dialog để sửa tên danh mục
+        EditText input = new EditText(requireContext());
+        input.setText(c.name);
+        input.setPadding(60, 40, 60, 40); // Thêm chút padding cho đẹp
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Sửa tên danh mục")
+                .setView(input)
+                .setPositiveButton("Lưu", (dialog, which) -> {
+                    String newName = input.getText().toString().trim();
+                    if (!newName.isEmpty()) {
+                        vm.updateCategory(c.id, newName);
+                    } else {
+                        Toast.makeText(requireContext(), "Tên không được để trống", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
     }
 }

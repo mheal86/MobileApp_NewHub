@@ -110,6 +110,15 @@ public class HomeFragment extends Fragment {
                 postAdapter.setDarkMode(isDarkMode);
             }
         });
+
+        // ⭐ QUAN TRỌNG: Lắng nghe lỗi từ ViewModel để hiển thị Toast
+        viewModel.getErrorLiveData().observe(getViewLifecycleOwner(), errorMsg -> {
+            if (errorMsg != null && !errorMsg.isEmpty()) {
+                Toast.makeText(requireContext(), errorMsg, Toast.LENGTH_SHORT).show();
+                // Xóa lỗi sau khi hiển thị để không lặp lại khi xoay màn hình
+                // viewModel.clearError(); // Bạn có thể thêm method này nếu cần
+            }
+        });
     }
 
     private void setupSwipeRefresh() {

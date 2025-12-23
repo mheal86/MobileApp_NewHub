@@ -21,6 +21,7 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.VH> {
 
     public interface Listener {
         void onDelete(AdminCategory c);
+        void onEdit(AdminCategory c);
     }
 
     public CategoryAdapter(List<AdminCategory> list, Listener listener) {
@@ -31,8 +32,6 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.VH> {
     @NonNull
     @Override
     public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Tạm dùng item_admin_user layout hoặc tạo mới item_admin_category.xml
-        // Tạo mới cho rõ ràng
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_admin_category, parent, false);
         return new VH(v);
     }
@@ -49,14 +48,27 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.VH> {
 
     class VH extends RecyclerView.ViewHolder {
         TextView name;
-        ImageButton btnDelete;
+        ImageButton btnDelete, btnEdit;
 
         public VH(@NonNull View itemView) {
             super(itemView);
             name = itemView.findViewById(R.id.txtName);
             btnDelete = itemView.findViewById(R.id.btnDelete);
+            btnEdit = itemView.findViewById(R.id.btnEdit);
 
-            btnDelete.setOnClickListener(v -> listener.onDelete(list.get(getAdapterPosition())));
+            btnDelete.setOnClickListener(v -> {
+                int pos = getAdapterPosition();
+                if (pos != RecyclerView.NO_POSITION) {
+                    listener.onDelete(list.get(pos));
+                }
+            });
+            
+            btnEdit.setOnClickListener(v -> {
+                int pos = getAdapterPosition();
+                if (pos != RecyclerView.NO_POSITION) {
+                    listener.onEdit(list.get(pos));
+                }
+            });
         }
 
         void bind(AdminCategory c) {

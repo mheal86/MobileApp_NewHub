@@ -13,7 +13,8 @@ import com.example.mobileapp_newhub.data.repository.RepositoryImpl;
 import com.example.mobileapp_newhub.model.Category;
 import com.example.mobileapp_newhub.model.Comment;
 import com.example.mobileapp_newhub.model.Post;
-import com.example.mobileapp_newhub.utils.NetworkUtils; // Import NetworkUtils
+import com.example.mobileapp_newhub.utils.NetworkUtils;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,7 @@ import java.util.List;
 public class ReaderViewModel extends AndroidViewModel {
 
     private final Repository repository;
+    private final FirebaseAuth mAuth;
 
     private final MutableLiveData<List<Post>> allPosts = new MutableLiveData<>();
     private final MutableLiveData<List<Post>> savedPosts = new MutableLiveData<>();
@@ -28,20 +30,19 @@ public class ReaderViewModel extends AndroidViewModel {
     private final MutableLiveData<List<Post>> searchResults = new MutableLiveData<>();
     private final MutableLiveData<List<Category>> categories = new MutableLiveData<>();
     
-    // LiveData cho comments
     private final MutableLiveData<List<Comment>> currentPostComments = new MutableLiveData<>();
     
     private final MutableLiveData<Integer> fontSize = new MutableLiveData<>(16);
     private final MutableLiveData<Boolean> darkMode = new MutableLiveData<>(false);
     
-    // NEW: LiveData báo trạng thái mạng
     private final MutableLiveData<Boolean> isOfflineMode = new MutableLiveData<>(false);
+    private final MutableLiveData<String> errorLiveData = new MutableLiveData<>();
 
     public ReaderViewModel(@NonNull Application application) {
         super(application);
         repository = new RepositoryImpl(application);
+        mAuth = FirebaseAuth.getInstance();
         
-        // Kiểm tra mạng và load dữ liệu
         checkNetworkAndLoad();
     }
     
@@ -63,6 +64,10 @@ public class ReaderViewModel extends AndroidViewModel {
         return isOfflineMode;
     }
 
+    public LiveData<String> getErrorLiveData() {
+        return errorLiveData;
+    }
+
     private void loadPosts(boolean hasNetwork) {
         repository.getPosts(hasNetwork, new OnRepositoryCallback<List<Post>>() {
             @Override
@@ -72,7 +77,7 @@ public class ReaderViewModel extends AndroidViewModel {
 
             @Override
             public void onFailure(Exception e) {
-                // handle error
+                errorLiveData.setValue("Lỗi tải bài viết: " + e.getMessage());
             }
         });
     }
@@ -115,7 +120,6 @@ public class ReaderViewModel extends AndroidViewModel {
         });
     }
     
-    // --- COMMENT LOGIC ---
     public LiveData<List<Comment>> getCurrentPostComments() {
         return currentPostComments;
     }
@@ -123,9 +127,7 @@ public class ReaderViewModel extends AndroidViewModel {
     public void loadComments(String postId) {
         if (postId == null) return;
         
-        // Comment luôn cần mạng để load realtime
         if (!NetworkUtils.isNetworkAvailable(getApplication())) {
-             // Có thể load từ cache nếu implement, nhưng hiện tại comment chưa có cache
              currentPostComments.setValue(new ArrayList<>());
              return;
         }
@@ -144,8 +146,13 @@ public class ReaderViewModel extends AndroidViewModel {
     }
     
     public void addComment(String postId, Comment comment, OnRepositoryCallback<Boolean> callback) {
+        if (mAuth.getCurrentUser() == null) {
+            if(callback != null) callback.onFailure(new Exception("Bạn cần đăng nhập để bình luận"));
+            return;
+        }
+
         if (postId == null || comment == null) {
-            if(callback != null) callback.onFailure(new Exception("Invalid Data"));
+            if(callback != null) callback.onFailure(new Exception("Dữ liệu không hợp lệ"));
             return;
         }
         
@@ -213,6 +220,11 @@ public class ReaderViewModel extends AndroidViewModel {
     }
 
     public void toggleSavePost(Post post) {
+        if (mAuth.getCurrentUser() == null) {
+            errorLiveData.setValue("Vui lòng đăng nhập để sử dụng tính năng yêu thích!");
+            return;
+        }
+
         if (post != null && post.getId() != null) {
             repository.toggleBookmark(post.getId(), new OnRepositoryCallback<Boolean>() {
                 @Override
@@ -223,6 +235,7 @@ public class ReaderViewModel extends AndroidViewModel {
 
                 @Override
                 public void onFailure(Exception e) {
+                    errorLiveData.setValue("Lỗi khi lưu bài viết");
                 }
             });
         }

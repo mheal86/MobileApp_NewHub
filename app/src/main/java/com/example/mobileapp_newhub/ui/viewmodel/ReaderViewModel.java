@@ -276,4 +276,9 @@ public class ReaderViewModel extends AndroidViewModel {
         Boolean current = darkMode.getValue();
         darkMode.setValue(current == null ? true : !current);
     }
+
+    public void clearUserData() {
+        savedPosts.setValue(new ArrayList<>());
+        historyPosts.setValue(new ArrayList<>());
+    }
 }

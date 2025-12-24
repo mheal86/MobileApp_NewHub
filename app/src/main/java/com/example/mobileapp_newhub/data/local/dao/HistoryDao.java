@@ -12,8 +12,8 @@ import java.util.List;
 @Dao
 public interface HistoryDao {
 
-    @Query("SELECT * FROM history ORDER BY viewedAt DESC")
-    List<HistoryEntity> getHistory();
+    @Query("SELECT * FROM history WHERE userId = :userId ORDER BY viewedAt DESC")
+    List<HistoryEntity> getHistory(String userId);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(HistoryEntity entity);
@@ -21,6 +21,9 @@ public interface HistoryDao {
     /**
      * Lấy danh sách ID của các bài viết đã xem.
      */
-    @Query("SELECT postId FROM history ORDER BY viewedAt DESC")
-    List<String> getHistoryPostIds();
+    @Query("SELECT postId FROM history WHERE userId = :userId ORDER BY viewedAt DESC")
+    List<String> getHistoryPostIds(String userId);
+    
+    @Query("DELETE FROM history WHERE userId = :userId")
+    void clearUserHistory(String userId);
 }

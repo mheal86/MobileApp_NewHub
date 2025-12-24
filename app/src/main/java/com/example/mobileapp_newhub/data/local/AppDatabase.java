@@ -19,15 +19,14 @@ import java.util.concurrent.Executors;
                 BookmarkEntity.class,
                 HistoryEntity.class
         },
-        version = 1,
-        exportSchema = false // Bổ sung để tránh warning khi build
+        version = 2, // <-- TĂNG PHIÊN BẢN
+        exportSchema = false
 )
 public abstract class AppDatabase extends RoomDatabase {
 
     private static volatile AppDatabase INSTANCE;
     private static final int NUMBER_OF_THREADS = 4;
 
-    // ExecutorService để chạy các tác vụ database trên luồng nền
     public static final ExecutorService databaseWriteExecutor =
             Executors.newFixedThreadPool(NUMBER_OF_THREADS);
 
@@ -45,7 +44,7 @@ public abstract class AppDatabase extends RoomDatabase {
                                     AppDatabase.class,
                                     "newshub_db"
                             )
-                            // XÓA DÒNG .allowMainThreadQueries() ĐI
+                            .fallbackToDestructiveMigration() // <-- THÊM DÒNG NÀY
                             .build();
                 }
             }

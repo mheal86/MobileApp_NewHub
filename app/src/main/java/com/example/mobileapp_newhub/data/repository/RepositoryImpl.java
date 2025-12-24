@@ -3,6 +3,8 @@ package com.example.mobileapp_newhub.data.repository;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import androidx.lifecycle.LiveData; // Import LiveData
 import androidx.lifecycle.Transformations; // Import Transformations
@@ -25,6 +27,7 @@ public class RepositoryImpl implements Repository {
     private final CategoryDao categoryDao;
     private final BookmarkDao bookmarkDao;
     private final HistoryDao historyDao;
+    private final FirebaseAuth mAuth;
 
     private final Executor executor;
     private final Handler mainThreadHandler = new Handler(Looper.getMainLooper());
@@ -37,6 +40,12 @@ public class RepositoryImpl implements Repository {
         this.categoryDao = db.categoryDao();
         this.bookmarkDao = db.bookmarkDao();
         this.historyDao = db.historyDao();
+        this.mAuth = FirebaseAuth.getInstance();
+    }
+
+    private String getCurrentUserId() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        return (user != null) ? user.getUid() : null;
     }
 
     private <T> void runOnMainThread(OnRepositoryCallback<T> callback, T data) {
@@ -52,10 +61,11 @@ public class RepositoryImpl implements Repository {
     }
 
     private List<Post> checkBookmarkStatus(List<Post> posts) {
-        if (posts == null) return null;
+        String userId = getCurrentUserId();
+        if (posts == null || userId == null) return posts;
         for (Post p : posts) {
             if (p.id != null) {
-                boolean isSaved = bookmarkDao.isBookmarked(p.id) > 0;
+                boolean isSaved = bookmarkDao.isBookmarked(userId, p.id) > 0;
                 p.setSaved(isSaved);
             }
         }
@@ -109,17 +119,17 @@ public class RepositoryImpl implements Repository {
 
     @Override
     public void getPostDetail(String postId, OnRepositoryCallback<Post> callback) {
+        String userId = getCurrentUserId();
         executor.execute(() -> {
             Post post = Mapper.fromPostEntity(postDao.getPostById(postId));
-            if (post != null) {
-                boolean isSaved = bookmarkDao.isBookmarked(postId) > 0;
+            if (post != null && userId != null) {
+                boolean isSaved = bookmarkDao.isBookmarked(userId, postId) > 0;
                 post.setSaved(isSaved);
             }
             runOnMainThread(callback, post);
         });
     }
 
-    // NEW: Implement Realtime Post Detail
     @Override
     public LiveData<Post> getPostLive(String postId) {
         return Transformations.map(postDao.getPostByIdLive(postId), entity -> {
@@ -130,36 +140,49 @@ public class RepositoryImpl implements Repository {
 
     @Override
     public void toggleBookmark(String postId, OnRepositoryCallback<Boolean> callback) {
+        String userId = getCurrentUserId();
+        if (userId == null) {
+            runOnMainThreadError(callback, new Exception("User not logged in"));
+            return;
+        }
         executor.execute(() -> {
-            boolean isCurrentlyBookmarked = bookmarkDao.isBookmarked(postId) > 0;
+            boolean isCurrentlyBookmarked = bookmarkDao.isBookmarked(userId, postId) > 0;
             boolean newState;
-            
             if (isCurrentlyBookmarked) {
-                bookmarkDao.removeBookmark(postId);
+                bookmarkDao.removeBookmark(userId, postId);
                 newState = false;
             } else {
                 BookmarkEntity b = new BookmarkEntity();
+                b.userId = userId;
                 b.postId = postId;
                 b.bookmarkedAt = System.currentTimeMillis();
                 bookmarkDao.bookmark(b);
                 newState = true;
             }
-            runOnMainThread(callback, newState); 
+            runOnMainThread(callback, newState);
         });
     }
 
     @Override
     public void isBookmarked(String postId, OnRepositoryCallback<Boolean> callback) {
+        String userId = getCurrentUserId();
+        if (userId == null) {
+            runOnMainThread(callback, false);
+            return;
+        }
         executor.execute(() -> {
-            boolean isBookmarked = bookmarkDao.isBookmarked(postId) > 0;
+            boolean isBookmarked = bookmarkDao.isBookmarked(userId, postId) > 0;
             runOnMainThread(callback, isBookmarked);
         });
     }
 
     @Override
     public void markViewed(String postId) {
+        String userId = getCurrentUserId();
+        if (userId == null) return;
         executor.execute(() -> {
             HistoryEntity h = new HistoryEntity();
+            h.userId = userId;
             h.postId = postId;
             h.viewedAt = System.currentTimeMillis();
             historyDao.insert(h);
@@ -168,8 +191,13 @@ public class RepositoryImpl implements Repository {
 
     @Override
     public void getBookmarkedPosts(OnRepositoryCallback<List<Post>> callback) {
+        String userId = getCurrentUserId();
+        if (userId == null) {
+            runOnMainThread(callback, new java.util.ArrayList<>());
+            return;
+        }
         executor.execute(() -> {
-            List<String> postIds = bookmarkDao.getBookmarkPostIds();
+            List<String> postIds = bookmarkDao.getBookmarkPostIds(userId);
             List<Post> posts = Mapper.fromPostEntities(postDao.getPostsByIds(postIds));
             for(Post p : posts) {
                 p.setSaved(true);
@@ -180,8 +208,13 @@ public class RepositoryImpl implements Repository {
 
     @Override
     public void getHistoryPosts(OnRepositoryCallback<List<Post>> callback) {
+        String userId = getCurrentUserId();
+        if (userId == null) {
+            runOnMainThread(callback, new java.util.ArrayList<>());
+            return;
+        }
         executor.execute(() -> {
-            List<String> postIds = historyDao.getHistoryPostIds();
+            List<String> postIds = historyDao.getHistoryPostIds(userId);
             List<Post> posts = Mapper.fromPostEntities(postDao.getPostsByIds(postIds));
             List<Post> checkedPosts = checkBookmarkStatus(posts);
             runOnMainThread(callback, checkedPosts);

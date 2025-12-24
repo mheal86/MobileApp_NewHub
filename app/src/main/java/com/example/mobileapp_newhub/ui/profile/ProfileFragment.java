@@ -62,10 +62,9 @@ public class ProfileFragment extends Fragment {
     // Stats TextViews
     private TextView statViewedCount;
     private TextView statSavedCount;
-    // Đã xóa statFollowingCount
     private TextView statDownloadedCount; 
 
-    // Content Management Rows (NEW)
+    // Content Management Rows
     private View rowSavedPosts;
     private View rowDownloadedPosts;
     private View rowHistory;
@@ -123,7 +122,6 @@ public class ProfileFragment extends Fragment {
         // Stats
         statViewedCount = view.findViewById(R.id.statViewedCount);
         statSavedCount = view.findViewById(R.id.statSavedCount);
-        // Đã xóa việc tìm view statFollowingCount
         statDownloadedCount = view.findViewById(R.id.statDownloadedCount);
         
         // Content Management Rows
@@ -144,11 +142,8 @@ public class ProfileFragment extends Fragment {
         // Init Guest Views
         loginNavButton = view.findViewById(R.id.loginNavButton);
 
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        updateUIState(currentUser);
-
         // Observers
-        authViewModel.getUserLiveData().observe(getViewLifecycleOwner(), this::updateUIState);
+        authViewModel.getUserLiveData().observe(getViewLifecycleOwner(), this::updateAuthUIState);
         authViewModel.getUserProfileLiveData().observe(getViewLifecycleOwner(), user -> {
             if (user != null && FirebaseAuth.getInstance().getCurrentUser() != null) {
                 updateProfileUI(user);
@@ -172,7 +167,6 @@ public class ProfileFragment extends Fragment {
             }
         });
         
-        readerViewModel.loadHistoryPosts(); 
         readerViewModel.getHistoryPosts().observe(getViewLifecycleOwner(), posts -> {
              if (posts != null) {
                  statViewedCount.setText(String.valueOf(posts.size()));
@@ -191,9 +185,7 @@ public class ProfileFragment extends Fragment {
         editProfileRow.setOnClickListener(v -> showEditProfileDialog());
         changePasswordRow.setOnClickListener(v -> showChangePasswordDialog());
         
-        // --- Navigation for Content Management ---
         rowSavedPosts.setOnClickListener(v -> {
-            // Chuyển tab BottomNavigation
             BottomNavigationView bottomNav = requireActivity().findViewById(R.id.bottom_nav);
             if (bottomNav != null) {
                 bottomNav.setSelectedItemId(R.id.nav_bookmark);
@@ -212,7 +204,6 @@ public class ProfileFragment extends Fragment {
             }
         });
 
-        // --- NEW: Settings ---
         rowSettings.setOnClickListener(v -> {
             try {
                 Navigation.findNavController(requireView()).navigate(R.id.action_profileFragment_to_settingsFragment);
@@ -228,7 +219,7 @@ public class ProfileFragment extends Fragment {
                 .build());
     }
 
-    private void updateUIState(FirebaseUser user) {
+    private void updateAuthUIState(FirebaseUser user) {
         if (user != null) {
             profileLayout.setVisibility(View.VISIBLE);
             guestLayout.setVisibility(View.GONE);
@@ -270,7 +261,6 @@ public class ProfileFragment extends Fragment {
         
         User currentUser = authViewModel.getUserProfileLiveData().getValue();
 
-        // Avatar
         dialogAvatarImageView = new ImageView(requireContext());
         int size = (int) (100 * getResources().getDisplayMetrics().density);
         LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(size, size);
@@ -294,13 +284,11 @@ public class ProfileFragment extends Fragment {
         changeAvatarHint.setPadding(0, 0, 0, 30);
         layout.addView(changeAvatarHint);
 
-        // Name
         final EditText nameInput = new EditText(requireContext());
         nameInput.setHint("Tên hiển thị");
         nameInput.setText(nameTextView.getText());
         layout.addView(nameInput);
 
-        // Interests
         TextView interestsLabel = new TextView(requireContext());
         interestsLabel.setText("Chọn sở thích:");
         interestsLabel.setPadding(0, 30, 0, 10);

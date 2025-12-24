@@ -1,63 +1,63 @@
 package com.example.mobileapp_newhub;
 
+import android.content.Intent;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 
-import com.example.mobileapp_newhub.auth.AuthViewModel;
-import com.example.mobileapp_newhub.ui.viewmodel.ReaderViewModel;
+// import com.example.mobileapp_newhub.ui.WelcomeActivity; // Xóa import sai
+import com.example.mobileapp_newhub.auth.WelcomeActivity; // Import đúng
+import com.example.mobileapp_newhub.utils.NetworkUtils;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity {
 
     private NavController navController;
-    private AuthViewModel authViewModel;
-    private ReaderViewModel readerViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Initialize ViewModels
-        authViewModel = new ViewModelProvider(this).get(AuthViewModel.class);
-        readerViewModel = new ViewModelProvider(this).get(ReaderViewModel.class);
-
-        // Setup observer for user authentication state
-        setupAuthObserver();
-
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_nav);
 
-        // Get NavController from NavHostFragment
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.nav_host_fragment);
 
         if (navHostFragment != null) {
             navController = navHostFragment.getNavController();
-
-            // Connect BottomNavigationView with NavController
             NavigationUI.setupWithNavController(bottomNavigationView, navController);
-
-            // Handle navigation from LoginActivity
+            
             if (getIntent() != null && getIntent().getBooleanExtra("navigate_to_profile", false)) {
+                navController.navigate(R.id.settingsFragment);
                 bottomNavigationView.setSelectedItemId(R.id.nav_profile);
             }
         }
     }
 
-    private void setupAuthObserver() {
-        authViewModel.getUserLiveData().observe(this, firebaseUser -> {
-            if (firebaseUser != null) {
-                // User has logged in, load their data
-                readerViewModel.loadSavedPosts();
-                readerViewModel.loadHistoryPosts();
+    @Override
+    protected void onResume() {
+        super.onResume();
+        checkNetworkAndAuth();
+    }
+    
+    private void checkNetworkAndAuth() {
+        // Nếu không có mạng
+        if (!NetworkUtils.isNetworkAvailable(this)) {
+            // Kiểm tra trạng thái đăng nhập
+            if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+                // ĐÃ ĐĂNG NHẬP (User/Admin) + MẤT MẠNG -> Không cho dùng -> Về Welcome
+                Intent intent = new Intent(this, WelcomeActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
             } else {
-                // User has logged out, clear all user-specific data
-                readerViewModel.clearUserData();
+                // CHƯA ĐĂNG NHẬP (Guest) + MẤT MẠNG -> Cho phép dùng tiếp (để xem cache)
+                // Không làm gì cả
             }
-        });
+        }
     }
 }

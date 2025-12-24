@@ -25,9 +25,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
-import androidx.navigation.ui.NavigationUI;
 
 import com.bumptech.glide.Glide;
 import com.example.mobileapp_newhub.R;
@@ -49,22 +47,18 @@ public class ProfileFragment extends Fragment {
     private AuthViewModel authViewModel;
     private ReaderViewModel readerViewModel;
 
-    // UI Layouts
     private NestedScrollView profileLayout;
-    private LinearLayout guestLayout;
+    private LinearLayout layoutGuest; // Đổi tên biến cho khớp layout mới
 
-    // UI Elements for Profile
     private ImageView avatarImageView;
     private TextView nameTextView;
     private TextView emailTextView;
     private ChipGroup interestsChipGroup;
     
-    // Stats TextViews
     private TextView statViewedCount;
     private TextView statSavedCount;
     private TextView statDownloadedCount; 
 
-    // Content Management Rows
     private View rowSavedPosts;
     private View rowDownloadedPosts;
     private View rowHistory;
@@ -72,17 +66,14 @@ public class ProfileFragment extends Fragment {
     private TextView txtSavedCountBadge;
     private TextView txtDownloadedCountBadge;
     
-    // Buttons / Clickable Layouts
     private View uploadAvatarButton; 
     private View editProfileRow;
     private View changePasswordRow;
     private View logoutRow;
     private View rowSettings; 
 
-    // UI Elements for Guest
-    private Button loginNavButton;
+    private Button btnLogin; // Đổi tên biến cho khớp ID mới
     
-    // Dialog UI reference
     private ImageView dialogAvatarImageView;
 
     private final ActivityResultLauncher<PickVisualMediaRequest> pickMedia =
@@ -109,22 +100,18 @@ public class ProfileFragment extends Fragment {
         authViewModel = new ViewModelProvider(requireActivity()).get(AuthViewModel.class);
         readerViewModel = new ViewModelProvider(requireActivity()).get(ReaderViewModel.class);
 
-        // Init Layouts
         profileLayout = view.findViewById(R.id.profileLayout);
-        guestLayout = view.findViewById(R.id.guestLayout);
+        layoutGuest = view.findViewById(R.id.layoutGuest); // ID mới
 
-        // Init Profile Views
         avatarImageView = view.findViewById(R.id.avatarImageView);
         nameTextView = view.findViewById(R.id.nameTextView);
         emailTextView = view.findViewById(R.id.emailTextView);
         interestsChipGroup = view.findViewById(R.id.interestsChipGroup);
         
-        // Stats
         statViewedCount = view.findViewById(R.id.statViewedCount);
         statSavedCount = view.findViewById(R.id.statSavedCount);
         statDownloadedCount = view.findViewById(R.id.statDownloadedCount);
         
-        // Content Management Rows
         rowSavedPosts = view.findViewById(R.id.rowSavedPosts);
         rowDownloadedPosts = view.findViewById(R.id.rowDownloadedPosts);
         rowHistory = view.findViewById(R.id.rowHistory);
@@ -132,17 +119,17 @@ public class ProfileFragment extends Fragment {
         txtSavedCountBadge = view.findViewById(R.id.txtSavedCountBadge);
         txtDownloadedCountBadge = view.findViewById(R.id.txtDownloadedCountBadge);
         
-        // Settings / Account
         uploadAvatarButton = view.findViewById(R.id.uploadAvatarButton);
         rowSettings = view.findViewById(R.id.rowSettings); 
         editProfileRow = view.findViewById(R.id.editProfileRow);
         changePasswordRow = view.findViewById(R.id.changePasswordRow);
         logoutRow = view.findViewById(R.id.logoutRow);
 
-        // Init Guest Views
-        loginNavButton = view.findViewById(R.id.loginNavButton);
+        btnLogin = view.findViewById(R.id.btnLogin); // ID mới
 
-        // Observers
+        // Cập nhật trạng thái ngay lập tức
+        updateAuthUIState(FirebaseAuth.getInstance().getCurrentUser());
+
         authViewModel.getUserLiveData().observe(getViewLifecycleOwner(), this::updateAuthUIState);
         authViewModel.getUserProfileLiveData().observe(getViewLifecycleOwner(), user -> {
             if (user != null && FirebaseAuth.getInstance().getCurrentUser() != null) {
@@ -155,7 +142,6 @@ public class ProfileFragment extends Fragment {
              }
         });
         
-        // --- Observe ReaderViewModel for stats ---
         readerViewModel.getSavedPosts().observe(getViewLifecycleOwner(), posts -> {
             if (posts != null) {
                 String count = String.valueOf(posts.size());
@@ -180,7 +166,7 @@ public class ProfileFragment extends Fragment {
 
     private void setupClickListeners() {
         logoutRow.setOnClickListener(v -> authViewModel.logout());
-        loginNavButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), LoginActivity.class)));
+        btnLogin.setOnClickListener(v -> startActivity(new Intent(requireContext(), LoginActivity.class)));
         uploadAvatarButton.setOnClickListener(v -> launchPhotoPicker());
         editProfileRow.setOnClickListener(v -> showEditProfileDialog());
         changePasswordRow.setOnClickListener(v -> showChangePasswordDialog());
@@ -222,10 +208,10 @@ public class ProfileFragment extends Fragment {
     private void updateAuthUIState(FirebaseUser user) {
         if (user != null) {
             profileLayout.setVisibility(View.VISIBLE);
-            guestLayout.setVisibility(View.GONE);
+            layoutGuest.setVisibility(View.GONE);
         } else {
             profileLayout.setVisibility(View.GONE);
-            guestLayout.setVisibility(View.VISIBLE);
+            layoutGuest.setVisibility(View.VISIBLE);
         }
     }
 

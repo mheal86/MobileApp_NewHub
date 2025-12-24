@@ -1,99 +1,127 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
+    android:orientation="vertical"
     android:background="#FFFFFF">
 
-    <LinearLayout
+    <!-- HEADER: Nút Back và Tiêu đề -->
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp"
-        android:gravity="center">
+        android:padding="16dp">
 
-        <TextView
-            android:id="@+id/tvLoginTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Đăng nhập"
-            android:textSize="32sp"
-            android:textStyle="bold"
-            android:textColor="#333333"
-            android:layout_marginBottom="32dp"/>
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@android:drawable/ic_menu_revert"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:contentDescription="Quay lại"
+            app:tint="#333333"/>
+    </RelativeLayout>
 
-        <EditText
-            android:id="@+id/emailEditText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Email"
-            android:inputType="textEmailAddress"
-            android:background="@android:drawable/edit_text"
-            android:minHeight="48dp"
-            android:layout_marginBottom="16dp"/>
-
-        <EditText
-            android:id="@+id/passwordEditText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Mật khẩu"
-            android:inputType="textPassword"
-            android:background="@android:drawable/edit_text"
-            android:minHeight="48dp"
-            android:layout_marginBottom="8dp"/>
-
-        <TextView
-            android:id="@+id/forgotPasswordTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Quên mật khẩu?"
-            android:layout_gravity="end"
-            android:textColor="#6200EE"
-            android:padding="8dp"/>
-
-        <Button
-            android:id="@+id/loginButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Đăng nhập"
-            android:backgroundTint="#6200EE"
-            android:textColor="#FFFFFF"
-            android:layout_marginTop="24dp"
-            android:minHeight="48dp"/>
-
-        <Button
-            android:id="@+id/googleSignInButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Đăng nhập bằng Google"
-            android:backgroundTint="#FFFFFF"
-            android:textColor="#757575"
-            android:layout_marginTop="12dp"
-            android:minHeight="48dp"
-            style="?attr/materialButtonOutlinedStyle"/>
+    <!-- CONTENT: Phần nhập liệu cuộn được -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
         <LinearLayout
-            android:id="@+id/layoutRegister"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="24dp">
+            android:orientation="vertical"
+            android:paddingHorizontal="24dp"
+            android:paddingBottom="24dp"
+            android:gravity="center_horizontal">
 
             <TextView
+                android:id="@+id/tvLoginTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Chưa có tài khoản?"
-                android:textColor="#757575"/>
-
-            <TextView
-                android:id="@+id/registerTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=" Đăng ký ngay"
-                android:textColor="#6200EE"
+                android:text="Đăng nhập"
+                android:textSize="32sp"
                 android:textStyle="bold"
-                android:padding="4dp"/>
-        </LinearLayout>
+                android:textColor="#333333"
+                android:layout_marginBottom="32dp"
+                android:layout_marginTop="16dp"/>
 
-    </LinearLayout>
-</ScrollView>
+            <EditText
+                android:id="@+id/emailEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Email"
+                android:inputType="textEmailAddress"
+                android:background="@android:drawable/edit_text"
+                android:minHeight="48dp"
+                android:layout_marginBottom="16dp"/>
+
+            <EditText
+                android:id="@+id/passwordEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Mật khẩu"
+                android:inputType="textPassword"
+                android:background="@android:drawable/edit_text"
+                android:minHeight="48dp"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/forgotPasswordTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Quên mật khẩu?"
+                android:layout_gravity="end"
+                android:textColor="#6200EE"
+                android:padding="8dp"/>
+
+            <Button
+                android:id="@+id/loginButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Đăng nhập"
+                android:backgroundTint="#6200EE"
+                android:textColor="#FFFFFF"
+                android:layout_marginTop="24dp"
+                android:minHeight="48dp"/>
+
+            <Button
+                android:id="@+id/googleSignInButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Đăng nhập bằng Google"
+                android:backgroundTint="#FFFFFF"
+                android:textColor="#757575"
+                android:layout_marginTop="12dp"
+                android:minHeight="48dp"
+                style="?attr/materialButtonOutlinedStyle"/>
+
+            <LinearLayout
+                android:id="@+id/layoutRegister"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Chưa có tài khoản?"
+                    android:textColor="#757575"/>
+
+                <TextView
+                    android:id="@+id/registerTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" Đăng ký ngay"
+                    android:textColor="#6200EE"
+                    android:textStyle="bold"
+                    android:padding="4dp"/>
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

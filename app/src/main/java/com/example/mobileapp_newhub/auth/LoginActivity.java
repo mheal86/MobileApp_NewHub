@@ -6,6 +6,7 @@ import android.text.InputType;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,6 +20,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.mobileapp_newhub.MainActivity;
 import com.example.mobileapp_newhub.R;
 import com.example.mobileapp_newhub.admin.AdminActivity;
+import com.example.mobileapp_newhub.utils.NetworkUtils;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.common.api.ApiException;
@@ -52,8 +54,17 @@ public class LoginActivity extends AppCompatActivity {
         userRole = getIntent().getStringExtra("role");
         if (userRole == null) userRole = "user";
 
-        // Cập nhật cách lấy ViewModel
         authViewModel = new ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication())).get(AuthViewModel.class);
+
+        // Ánh xạ nút Back và xử lý chuyển hướng về WelcomeActivity
+        ImageButton btnBack = findViewById(R.id.btnBack);
+        btnBack.setOnClickListener(v -> {
+            Intent intent = new Intent(LoginActivity.this, WelcomeActivity.class);
+            // Xóa hết Activity trước đó để đảm bảo người dùng bắt đầu lại từ Welcome
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            finish();
+        });
 
         tvLoginTitle = findViewById(R.id.tvLoginTitle);
         emailEditText = findViewById(R.id.emailEditText);
@@ -64,23 +75,14 @@ public class LoginActivity extends AppCompatActivity {
         forgotPasswordTextView = findViewById(R.id.forgotPasswordTextView);
         TextView registerTextView = findViewById(R.id.registerTextView);
 
-        if ("admin".equals(userRole)) {
-            tvLoginTitle.setText("Đăng nhập Quản trị viên");
-            emailEditText.setHint("ID Tài khoản");
-            emailEditText.setInputType(InputType.TYPE_CLASS_TEXT);
-            googleSignInButton.setVisibility(View.GONE);
-            layoutRegister.setVisibility(View.GONE);
-            forgotPasswordTextView.setVisibility(View.GONE);
-        } else {
-            tvLoginTitle.setText("Đăng nhập");
-            emailEditText.setHint("Email");
-            emailEditText.setInputType(InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
-            googleSignInButton.setVisibility(View.VISIBLE);
-            layoutRegister.setVisibility(View.VISIBLE);
-            forgotPasswordTextView.setVisibility(View.VISIBLE);
-        }
+        setupUI();
 
         loginButton.setOnClickListener(v -> {
+            if (!NetworkUtils.isNetworkAvailable(this)) {
+                Toast.makeText(this, "Không có kết nối mạng! Vui lòng kiểm tra lại.", Toast.LENGTH_LONG).show();
+                return;
+            }
+
             String input = emailEditText.getText().toString().trim();
             String password = passwordEditText.getText().toString().trim();
 
@@ -97,27 +99,33 @@ public class LoginActivity extends AppCompatActivity {
             authViewModel.login(input, password);
         });
 
-        // ĐÃ SỬA: Gọi Intent đăng nhập Google từ ViewModel và khởi chạy
         googleSignInButton.setOnClickListener(v -> {
+            if (!NetworkUtils.isNetworkAvailable(this)) {
+                Toast.makeText(this, "Không có kết nối mạng!", Toast.LENGTH_SHORT).show();
+                return;
+            }
             Intent signInIntent = authViewModel.getGoogleSignInIntent();
-            googleSignInLauncher.launch(signInIntent);
+            if (signInIntent != null) {
+                googleSignInLauncher.launch(signInIntent);
+            }
         });
 
-        registerTextView.setOnClickListener(v -> {
-            startActivity(new Intent(this, RegisterActivity.class));
-        });
+        registerTextView.setOnClickListener(v -> startActivity(new Intent(this, RegisterActivity.class)));
 
         forgotPasswordTextView.setOnClickListener(v -> showForgotPasswordDialog());
 
         authViewModel.getUserLiveData().observe(this, firebaseUser -> {
             if (firebaseUser != null) {
+                if (!NetworkUtils.isNetworkAvailable(LoginActivity.this)) {
+                    Toast.makeText(LoginActivity.this, "Mất mạng! Không thể đăng nhập.", Toast.LENGTH_LONG).show();
+                    authViewModel.signOut();
+                    return;
+                }
+
                 if ("admin".equals(userRole)) {
                     checkAdminRole(firebaseUser.getUid());
                 } else {
-                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(intent);
-                    finish();
+                    navigateToMain();
                 }
             }
         });
@@ -127,8 +135,33 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         authViewModel.getPasswordResetLiveData().observe(this, success -> {
-            if (success != null && success) Toast.makeText(this, "Password reset email sent.", Toast.LENGTH_LONG).show();
+            if (success != null && success) Toast.makeText(this, "Email đặt lại mật khẩu đã được gửi.", Toast.LENGTH_LONG).show();
         });
+    }
+
+    private void setupUI() {
+        if ("admin".equals(userRole)) {
+            tvLoginTitle.setText("Đăng nhập Quản trị viên");
+            emailEditText.setHint("ID Tài khoản");
+            emailEditText.setInputType(InputType.TYPE_CLASS_TEXT);
+            googleSignInButton.setVisibility(View.GONE);
+            layoutRegister.setVisibility(View.GONE);
+            forgotPasswordTextView.setVisibility(View.GONE);
+        } else {
+            tvLoginTitle.setText("Đăng nhập");
+            emailEditText.setHint("Email");
+            emailEditText.setInputType(InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+            googleSignInButton.setVisibility(View.VISIBLE);
+            layoutRegister.setVisibility(View.VISIBLE);
+            forgotPasswordTextView.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void navigateToMain() {
+        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
@@ -136,26 +169,37 @@ public class LoginActivity extends AppCompatActivity {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
             authViewModel.firebaseAuthWithGoogle(account);
         } catch (ApiException e) {
-            Toast.makeText(this, "Google sign in failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Đăng nhập Google thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
     private void showForgotPasswordDialog() {
+        if (!NetworkUtils.isNetworkAvailable(this)) {
+            Toast.makeText(this, "Cần có mạng để thực hiện chức năng này!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         EditText resetEmail = new EditText(this);
-        resetEmail.setHint("Enter your email");
+        resetEmail.setHint("Nhập email của bạn");
         new AlertDialog.Builder(this)
-                .setTitle("Reset Password")
-                .setMessage("Enter your email to receive reset link.")
+                .setTitle("Quên mật khẩu")
+                .setMessage("Nhập email để nhận liên kết đặt lại mật khẩu.")
                 .setView(resetEmail)
-                .setPositiveButton("Send", (dialog, which) -> {
+                .setPositiveButton("Gửi", (dialog, which) -> {
                     String email = resetEmail.getText().toString();
                     if (!email.isEmpty()) authViewModel.resetPassword(email);
                 })
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton("Hủy", null)
                 .show();
     }
 
     private void checkAdminRole(String userId) {
+        if (!NetworkUtils.isNetworkAvailable(this)) {
+            Toast.makeText(this, "Cần có mạng để kiểm tra quyền Admin!", Toast.LENGTH_SHORT).show();
+            authViewModel.signOut();
+            return;
+        }
+
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("users").document(userId)
                 .get()
@@ -169,11 +213,11 @@ public class LoginActivity extends AppCompatActivity {
                             startActivity(intent);
                             finish();
                         } else {
-                            Toast.makeText(LoginActivity.this, "Tài khoản này không có quyền Admin!", Toast.LENGTH_LONG).show();
+                            Toast.makeText(LoginActivity.this, "Tài khoản không có quyền Admin!", Toast.LENGTH_LONG).show();
                             authViewModel.signOut();
                         }
                     } else {
-                        Toast.makeText(LoginActivity.this, "Lỗi: Không tìm thấy hồ sơ người dùng.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(LoginActivity.this, "Lỗi: Không tìm thấy hồ sơ.", Toast.LENGTH_SHORT).show();
                         authViewModel.signOut();
                     }
                 })

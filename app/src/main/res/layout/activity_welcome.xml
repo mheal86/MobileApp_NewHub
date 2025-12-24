@@ -26,7 +26,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="với Newhub"
+            android:text="với Newshub"
             android:textColor="#6200EE"
             android:textSize="28sp"
             android:textStyle="bold"

@@ -7,9 +7,9 @@
     android:background="#F5F6FA"
     android:orientation="vertical">
 
-    <!-- GIAO DIỆN CHO KHÁCH (CHƯA ĐĂNG NHẬP) -->
+    <!-- GIAO DIỆN CHO KHÁCH (CHƯA ĐĂNG NHẬP) - GIỐNG BOOKMARK -->
     <LinearLayout
-        android:id="@+id/guestLayout"
+        android:id="@+id/layoutGuest"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
@@ -43,7 +43,7 @@
             android:layout_marginBottom="32dp"/>
 
         <Button
-            android:id="@+id/loginNavButton"
+            android:id="@+id/btnLogin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Đăng nhập / Đăng ký"
@@ -208,7 +208,7 @@
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ĐÃ LƯU" android:textSize="10sp" android:textColor="#999"/>
                 </LinearLayout>
 
-                <!-- Item 3: ĐÃ TẢI (Previous Item 4 moved here) -->
+                <!-- Item 3: ĐÃ TẢI -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -294,7 +294,6 @@
                         android:background="?selectableItemBackground">
                         <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_menu_save" app:tint="#2196F3" android:layout_marginEnd="16dp"/>
                         <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Bài viết đã lưu" android:textSize="16sp" android:textColor="#333" android:textStyle="bold"/>
-                        <!-- Badge ID: txtSavedCountBadge -->
                         <TextView android:id="@+id/txtSavedCountBadge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:background="#F0F0F0" android:paddingHorizontal="8dp" android:paddingVertical="2dp" android:layout_marginEnd="8dp"/>
                         <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@android:drawable/ic_media_play" app:tint="#CCC" android:rotation="0"/>
                     </LinearLayout>
@@ -310,7 +309,6 @@
                         android:background="?selectableItemBackground">
                         <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/stat_sys_download" app:tint="#009688" android:layout_marginEnd="16dp"/>
                         <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Bài viết đã tải" android:textSize="16sp" android:textColor="#333" android:textStyle="bold"/>
-                         <!-- Badge ID: txtDownloadedCountBadge -->
                          <TextView android:id="@+id/txtDownloadedCountBadge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:background="#F0F0F0" android:paddingHorizontal="8dp" android:paddingVertical="2dp" android:layout_marginEnd="8dp"/>
                          <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@android:drawable/ic_media_play" app:tint="#CCC"/>
                     </LinearLayout>
@@ -358,7 +356,6 @@
                     android:divider="@drawable/divider"
                     android:showDividers="middle">
                     
-                    <!-- NEW: Settings Row -->
                     <LinearLayout 
                         android:id="@+id/rowSettings"
                         android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="16dp" android:gravity="center_vertical" android:clickable="true" android:background="?selectableItemBackground">
@@ -367,7 +364,6 @@
                          <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@android:drawable/ic_media_play" app:tint="#CCC"/>
                     </LinearLayout>
                     
-                    <!-- Edit Name / Privacy -->
                     <LinearLayout 
                         android:id="@+id/editProfileRow"
                         android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="16dp" android:gravity="center_vertical" android:clickable="true" android:background="?selectableItemBackground">
@@ -376,7 +372,6 @@
                          <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@android:drawable/ic_media_play" app:tint="#CCC"/>
                     </LinearLayout>
 
-                    <!-- Change Password -->
                     <LinearLayout 
                         android:id="@+id/changePasswordRow"
                         android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="16dp" android:gravity="center_vertical" android:clickable="true" android:background="?selectableItemBackground">
@@ -385,7 +380,6 @@
                          <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@android:drawable/ic_media_play" app:tint="#CCC"/>
                     </LinearLayout>
 
-                     <!-- Logout -->
                     <LinearLayout
                         android:id="@+id/logoutRow"
                         android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="16dp" android:gravity="center_vertical" android:clickable="true" android:background="?selectableItemBackground">

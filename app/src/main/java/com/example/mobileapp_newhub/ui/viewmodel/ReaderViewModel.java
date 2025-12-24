@@ -120,6 +120,11 @@ public class ReaderViewModel extends AndroidViewModel {
         });
     }
     
+    // NEW: Expose LiveData for DetailFragment
+    public LiveData<Post> getPostDetailLive(String postId) {
+        return repository.getPostLive(postId);
+    }
+    
     public LiveData<List<Comment>> getCurrentPostComments() {
         return currentPostComments;
     }
@@ -229,10 +234,7 @@ public class ReaderViewModel extends AndroidViewModel {
             repository.toggleBookmark(post.getId(), new OnRepositoryCallback<Boolean>() {
                 @Override
                 public void onSuccess(Boolean isSaved) {
-                    // Cập nhật trạng thái cho bài viết hiện tại
                     post.setSaved(isSaved);
-                    
-                    // Cập nhật lại danh sách allPosts để UI tự động render lại
                     List<Post> currentList = allPosts.getValue();
                     if (currentList != null) {
                         for (Post p : currentList) {
@@ -241,10 +243,8 @@ public class ReaderViewModel extends AndroidViewModel {
                                 break;
                             }
                         }
-                        // Bắt buộc notify observer
                         allPosts.setValue(currentList);
                     }
-                    
                     loadSavedPosts();
                 }
 

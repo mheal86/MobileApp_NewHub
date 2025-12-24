@@ -4,13 +4,16 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 
+import androidx.lifecycle.LiveData; // Import LiveData
+import androidx.lifecycle.Transformations; // Import Transformations
+
 import com.example.mobileapp_newhub.data.local.AppDatabase;
 import com.example.mobileapp_newhub.data.local.dao.*;
 import com.example.mobileapp_newhub.data.local.entity.BookmarkEntity;
 import com.example.mobileapp_newhub.data.local.entity.HistoryEntity;
 import com.example.mobileapp_newhub.data.remote.FirestoreDataSource;
 import com.example.mobileapp_newhub.model.Category;
-import com.example.mobileapp_newhub.model.Comment; // Import
+import com.example.mobileapp_newhub.model.Comment;
 import com.example.mobileapp_newhub.model.Post;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -23,9 +26,7 @@ public class RepositoryImpl implements Repository {
     private final BookmarkDao bookmarkDao;
     private final HistoryDao historyDao;
 
-    // Executor để chạy tác vụ nền
     private final Executor executor;
-    // Handler để trả kết quả về luồng chính (UI Thread)
     private final Handler mainThreadHandler = new Handler(Looper.getMainLooper());
 
     public RepositoryImpl(Context context) {
@@ -50,12 +51,10 @@ public class RepositoryImpl implements Repository {
         }
     }
 
-    // --- LOGIC KIỂM TRA ĐÃ LƯU BÀI VIẾT CHƯA ---
     private List<Post> checkBookmarkStatus(List<Post> posts) {
         if (posts == null) return null;
         for (Post p : posts) {
             if (p.id != null) {
-                // Kiểm tra trong bảng Bookmark xem có ID này chưa
                 boolean isSaved = bookmarkDao.isBookmarked(p.id) > 0;
                 p.setSaved(isSaved);
             }
@@ -69,13 +68,11 @@ public class RepositoryImpl implements Repository {
             remote.fetchPosts(
                     posts -> executor.execute(() -> {
                         postDao.insertAll(Mapper.toPostEntities(posts));
-                        // SỬA: Gọi checkBookmarkStatus trước khi trả về
                         List<Post> checkedPosts = checkBookmarkStatus(posts);
                         runOnMainThread(callback, checkedPosts);
                     }),
                     e -> executor.execute(() -> {
                         List<Post> postsFromDb = Mapper.fromPostEntities(postDao.getPosts());
-                        // SỬA: Gọi checkBookmarkStatus trước khi trả về
                         List<Post> checkedPosts = checkBookmarkStatus(postsFromDb);
                         runOnMainThread(callback, checkedPosts);
                     })
@@ -83,7 +80,6 @@ public class RepositoryImpl implements Repository {
         } else {
             executor.execute(() -> {
                 List<Post> postsFromDb = Mapper.fromPostEntities(postDao.getPosts());
-                // SỬA: Gọi checkBookmarkStatus trước khi trả về
                 List<Post> checkedPosts = checkBookmarkStatus(postsFromDb);
                 runOnMainThread(callback, checkedPosts);
             });
@@ -115,12 +111,20 @@ public class RepositoryImpl implements Repository {
     public void getPostDetail(String postId, OnRepositoryCallback<Post> callback) {
         executor.execute(() -> {
             Post post = Mapper.fromPostEntity(postDao.getPostById(postId));
-            // SỬA: Kiểm tra trạng thái đã lưu
             if (post != null) {
                 boolean isSaved = bookmarkDao.isBookmarked(postId) > 0;
                 post.setSaved(isSaved);
             }
             runOnMainThread(callback, post);
+        });
+    }
+
+    // NEW: Implement Realtime Post Detail
+    @Override
+    public LiveData<Post> getPostLive(String postId) {
+        return Transformations.map(postDao.getPostByIdLive(postId), entity -> {
+            if (entity == null) return null;
+            return Mapper.fromPostEntity(entity);
         });
     }
 
@@ -140,7 +144,6 @@ public class RepositoryImpl implements Repository {
                 bookmarkDao.bookmark(b);
                 newState = true;
             }
-            // Trả về kết quả sau khi đã thực hiện DB xong
             runOnMainThread(callback, newState); 
         });
     }
@@ -168,7 +171,6 @@ public class RepositoryImpl implements Repository {
         executor.execute(() -> {
             List<String> postIds = bookmarkDao.getBookmarkPostIds();
             List<Post> posts = Mapper.fromPostEntities(postDao.getPostsByIds(postIds));
-            // Tất nhiên là tất cả bài trong danh sách này đều đã lưu rồi
             for(Post p : posts) {
                 p.setSaved(true);
             }
@@ -181,16 +183,13 @@ public class RepositoryImpl implements Repository {
         executor.execute(() -> {
             List<String> postIds = historyDao.getHistoryPostIds();
             List<Post> posts = Mapper.fromPostEntities(postDao.getPostsByIds(postIds));
-            // Cần kiểm tra trạng thái lưu cho cả bài trong lịch sử
             List<Post> checkedPosts = checkBookmarkStatus(posts);
             runOnMainThread(callback, checkedPosts);
         });
     }
 
-    // NEW: Implement Comments
     @Override
     public void getComments(String postId, OnRepositoryCallback<List<Comment>> callback) {
-        // Luôn fetch từ Network vì comment cần real-time
         remote.fetchComments(
             postId,
             comments -> runOnMainThread(callback, comments),
@@ -200,7 +199,6 @@ public class RepositoryImpl implements Repository {
 
     @Override
     public void addComment(String postId, Comment comment, OnRepositoryCallback<Boolean> callback) {
-        // Đảm bảo postId được set đúng
         comment.setPostId(postId); 
         remote.addComment(
             comment,

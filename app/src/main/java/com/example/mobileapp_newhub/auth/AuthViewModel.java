@@ -13,7 +13,7 @@ import com.cloudinary.android.callback.ErrorInfo;
 import com.cloudinary.android.callback.UploadCallback;
 import com.example.mobileapp_newhub.R;
 import com.example.mobileapp_newhub.model.User;
-import com.example.mobileapp_newhub.utils.CloudinaryHelper; // Import Helper
+import com.example.mobileapp_newhub.utils.CloudinaryHelper;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -23,7 +23,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.ListenerRegistration; // Import
 
 import java.util.HashMap;
 import java.util.List;
@@ -39,13 +39,15 @@ public class AuthViewModel extends AndroidViewModel {
     private final MutableLiveData<User> userProfileLiveData = new MutableLiveData<>();
     private final MutableLiveData<String> errorLiveData = new MutableLiveData<>();
     private final MutableLiveData<Boolean> passwordResetLiveData = new MutableLiveData<>();
+    
+    // Biến để quản lý lắng nghe Realtime
+    private ListenerRegistration userProfileListener;
 
     public AuthViewModel(@NonNull Application application) {
         super(application);
         mAuth = FirebaseAuth.getInstance();
         mDb = FirebaseFirestore.getInstance();
         
-        // Khởi tạo Cloudinary
         CloudinaryHelper.init(application);
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -56,7 +58,7 @@ public class AuthViewModel extends AndroidViewModel {
 
         if (mAuth.getCurrentUser() != null) {
             userLiveData.postValue(mAuth.getCurrentUser());
-            loadUserProfile();
+            startListeningUserProfile(); // Bắt đầu lắng nghe
         }
     }
 
@@ -66,7 +68,6 @@ public class AuthViewModel extends AndroidViewModel {
     public LiveData<String> getErrorLiveData() { return errorLiveData; }
     public LiveData<Boolean> getPasswordResetLiveData() { return passwordResetLiveData; }
     
-    // METHOD MỚI ĐỂ LẤY GOOGLE SIGN IN INTENT
     public Intent getGoogleSignInIntent() {
         return mGoogleSignInClient.getSignInIntent();
     }
@@ -76,7 +77,7 @@ public class AuthViewModel extends AndroidViewModel {
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         userLiveData.postValue(mAuth.getCurrentUser());
-                        loadUserProfile();
+                        startListeningUserProfile(); // Bắt đầu lắng nghe
                     } else {
                         errorLiveData.postValue(task.getException().getMessage());
                     }
@@ -89,12 +90,10 @@ public class AuthViewModel extends AndroidViewModel {
                     if (task.isSuccessful()) {
                         FirebaseUser firebaseUser = mAuth.getCurrentUser();
                         if (firebaseUser != null) {
-                            // Logic lưu role="user" ở đây là ĐÚNG
                             User newUser = new User(firebaseUser.getUid(), name, email, "", "user");
                             saveUserToFirestore(newUser);
                         }
                     } else {
-                        // Hiển thị lỗi rõ ràng hơn
                         if (task.getException() != null) {
                             errorLiveData.postValue(task.getException().getMessage());
                         } else {
@@ -118,7 +117,7 @@ public class AuthViewModel extends AndroidViewModel {
                                 saveUserToFirestore(newUser);
                             } else {
                                 userLiveData.postValue(firebaseUser);
-                                loadUserProfile();
+                                startListeningUserProfile(); // Bắt đầu lắng nghe
                             }
                         });
                     } else {
@@ -142,59 +141,52 @@ public class AuthViewModel extends AndroidViewModel {
         mDb.collection("users").document(user.getUid()).set(user)
                 .addOnSuccessListener(aVoid -> {
                     userLiveData.postValue(mAuth.getCurrentUser());
-                    loadUserProfile();
+                    startListeningUserProfile(); // Bắt đầu lắng nghe
                 })
                 .addOnFailureListener(e -> errorLiveData.postValue(e.getMessage()));
     }
     
-    // SỬA: Upload Avatar lên Cloudinary
     public void uploadAvatar(Uri uri) {
         if (mAuth.getCurrentUser() == null) return;
         String uid = mAuth.getCurrentUser().getUid();
 
-        // Sử dụng Cloudinary MediaManager
         MediaManager.get().upload(uri)
+                .option("folder", "avatars")
                 .callback(new UploadCallback() {
                     @Override
                     public void onStart(String requestId) {
-                        // Có thể thêm loading indicator nếu cần
                     }
 
                     @Override
                     public void onProgress(String requestId, long bytes, long totalBytes) {
-                        // update progress
                     }
 
                     @Override
                     public void onSuccess(String requestId, Map resultData) {
-                        // Lấy URL từ Cloudinary
                         String imageUrl = (String) resultData.get("secure_url");
                         if (imageUrl == null) {
                             imageUrl = (String) resultData.get("url");
                         }
 
                         if (imageUrl != null) {
-                            // Cập nhật Firestore
+                            // Chỉ cần cập nhật Firestore, Listener sẽ tự update UI
                             mDb.collection("users").document(uid).update("photoUrl", imageUrl);
                             
-                            // Cập nhật Firebase Auth Profile
                             UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
                                     .setPhotoUri(Uri.parse(imageUrl))
                                     .build();
                             
-                            mAuth.getCurrentUser().updateProfile(profileUpdates)
-                                    .addOnCompleteListener(task -> loadUserProfile());
+                            mAuth.getCurrentUser().updateProfile(profileUpdates);
                         }
                     }
 
                     @Override
                     public void onError(String requestId, ErrorInfo error) {
-                        errorLiveData.postValue("Lỗi upload Cloudinary: " + error.getDescription());
+                        errorLiveData.postValue("Lỗi Cloudinary: " + error.getDescription());
                     }
 
                     @Override
                     public void onReschedule(String requestId, ErrorInfo error) {
-                        //
                     }
                 })
                 .dispatch();
@@ -208,8 +200,8 @@ public class AuthViewModel extends AndroidViewModel {
         updates.put("name", name);
         updates.put("interests", interests);
 
+        // Chỉ cần update, Listener sẽ tự lo phần còn lại
         mDb.collection("users").document(uid).update(updates)
-                .addOnSuccessListener(aVoid -> loadUserProfile())
                 .addOnFailureListener(e -> errorLiveData.postValue("Lỗi cập nhật: " + e.getMessage()));
     }
 
@@ -226,23 +218,47 @@ public class AuthViewModel extends AndroidViewModel {
     }
 
     public void signOut() {
+        // Hủy lắng nghe khi đăng xuất
+        if (userProfileListener != null) {
+            userProfileListener.remove();
+            userProfileListener = null;
+        }
+        
         mAuth.signOut();
         mGoogleSignInClient.signOut().addOnCompleteListener(task -> {
             userLiveData.postValue(null);
             userProfileLiveData.postValue(null);
         });
     }
+    
+    // SỬA: Chuyển logic load thành startListening (Real-time)
+    private void startListeningUserProfile() {
+        // Nếu đã có listener cũ thì remove đi để tránh trùng lặp
+        if (userProfileListener != null) {
+            userProfileListener.remove();
+        }
 
-    private void loadUserProfile() {
         if (mAuth.getCurrentUser() != null) {
-            mDb.collection("users").document(mAuth.getCurrentUser().getUid())
-                    .get()
-                    .addOnSuccessListener(documentSnapshot -> {
-                        if (documentSnapshot.exists()) {
+            userProfileListener = mDb.collection("users").document(mAuth.getCurrentUser().getUid())
+                    .addSnapshotListener((documentSnapshot, e) -> {
+                        if (e != null) {
+                            errorLiveData.postValue("Lỗi đồng bộ User: " + e.getMessage());
+                            return;
+                        }
+                        
+                        if (documentSnapshot != null && documentSnapshot.exists()) {
                             User user = documentSnapshot.toObject(User.class);
                             userProfileLiveData.postValue(user);
                         }
                     });
+        }
+    }
+    
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        if (userProfileListener != null) {
+            userProfileListener.remove();
         }
     }
 }

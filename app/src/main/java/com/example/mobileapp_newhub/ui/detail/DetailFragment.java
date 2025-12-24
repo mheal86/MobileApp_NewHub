@@ -24,7 +24,7 @@ import com.bumptech.glide.Glide;
 import com.example.mobileapp_newhub.R;
 import com.example.mobileapp_newhub.adapter.CommentAdapter;
 import com.example.mobileapp_newhub.auth.AuthViewModel;
-import com.example.mobileapp_newhub.data.repository.OnRepositoryCallback; // Import callback
+import com.example.mobileapp_newhub.data.repository.OnRepositoryCallback; 
 import com.example.mobileapp_newhub.model.Category;
 import com.example.mobileapp_newhub.model.Comment;
 import com.example.mobileapp_newhub.model.Post;
@@ -35,9 +35,7 @@ import com.google.firebase.auth.FirebaseUser;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
-import java.util.UUID;
 
 public class DetailFragment extends Fragment {
 
@@ -53,7 +51,6 @@ public class DetailFragment extends Fragment {
     private ImageButton saveButton;
     private ImageButton shareButton; 
     
-    // Comments UI
     private RecyclerView rvComments;
     private CommentAdapter commentAdapter;
     private EditText etComment;
@@ -61,6 +58,7 @@ public class DetailFragment extends Fragment {
     private RatingBar ratingBarInput;
     
     private Post currentPost;
+    private String currentPostId;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -70,10 +68,9 @@ public class DetailFragment extends Fragment {
 
         if (getArguments() != null) {
             currentPost = (Post) getArguments().getSerializable("post");
-        }
-
-        if (savedInstanceState != null && currentPost == null) {
-            currentPost = (Post) savedInstanceState.getSerializable("post");
+            if (currentPost != null) {
+                currentPostId = currentPost.getId();
+            }
         }
     }
 
@@ -86,13 +83,30 @@ public class DetailFragment extends Fragment {
         initViews(view);
         setupCommentsRecyclerView();
 
+        // Hiển thị dữ liệu ban đầu nếu có
         if (currentPost != null) {
             displayPost(currentPost);
             viewModel.markPostAsViewed(currentPost);
             viewModel.loadComments(currentPost.getId());
-            
+        }
+        
+        // SỬA: Lắng nghe LiveData từ Repository để cập nhật Real-time
+        if (currentPostId != null) {
+            viewModel.getPostDetailLive(currentPostId).observe(getViewLifecycleOwner(), updatedPost -> {
+                if (updatedPost != null) {
+                    // Giữ lại trạng thái Saved vì Repository trả về từ DB có thể chưa sync bookmark status kịp
+                    // Tuy nhiên, logic trong RepositoryImpl.getPostLive hiện tại trả về raw entity
+                    // và DetailFragment thường tự quản lý nút Save.
+                    // Nhưng để tốt nhất, ta nên cập nhật currentPost.
+                    boolean isSavedBefore = currentPost != null ? currentPost.isSaved() : false;
+                    currentPost = updatedPost;
+                    currentPost.setSaved(isSavedBefore); // Giữ trạng thái saved tạm thời
+                    displayPost(currentPost);
+                }
+            });
+
             viewModel.getCategories().observe(getViewLifecycleOwner(), categories -> {
-                if (categories != null && currentPost.getCategoryId() != null) {
+                if (categories != null && currentPost != null && currentPost.getCategoryId() != null) {
                     for (Category cat : categories) {
                         if (cat.getId().equals(currentPost.getCategoryId())) {
                             categoryTextView.setText("Danh mục: " + cat.getName());
@@ -149,8 +163,8 @@ public class DetailFragment extends Fragment {
         titleTextView.setText(post.getTitle());
         authorTextView.setText("Tác giả: " + post.getAuthor());
         
-        categoryTextView.setText("Danh mục: " + post.getCategory());
-
+        // categoryTextView sẽ được update bởi observer categories
+        
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
         dateTextView.setText(sdf.format(new Date(post.getTimestamp())));
 
@@ -169,6 +183,7 @@ public class DetailFragment extends Fragment {
             public void onClick(View v) {
                 if (currentPost != null) {
                     viewModel.toggleSavePost(currentPost);
+                    // UI toggle ngay lập tức
                     boolean newStatus = !currentPost.isSaved();
                     currentPost.setSaved(newStatus);
                     updateSaveButtonIcon(newStatus);
@@ -244,12 +259,7 @@ public class DetailFragment extends Fragment {
                     System.currentTimeMillis()
             );
             
-            // Generate ID for new comment
-            // Lưu ý: ID thật sẽ do Firestore tạo nếu không set, nhưng để an toàn có thể set trước
-            // newComment.setId(UUID.randomUUID().toString());
-            
             if (currentPost != null) {
-                // Disable button để tránh spam
                 btnSendComment.setEnabled(false);
                 
                 viewModel.addComment(currentPost.getId(), newComment, new OnRepositoryCallback<Boolean>() {
@@ -295,13 +305,5 @@ public class DetailFragment extends Fragment {
         viewModel.getCurrentPostComments().observe(getViewLifecycleOwner(), comments -> {
             commentAdapter.setComments(comments);
         });
-    }
-
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        if (currentPost != null) {
-            outState.putSerializable("post", currentPost);
-        }
     }
 }

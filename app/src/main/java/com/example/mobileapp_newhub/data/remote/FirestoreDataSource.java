@@ -18,40 +18,50 @@ public class FirestoreDataSource {
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
+    // SỬA: Chuyển fetchPosts sang Realtime Updates
     public void fetchPosts(OnSuccessListener<List<Post>> successCallback, OnFailureListener failureCallback) {
         db.collection("posts")
                 .orderBy("timestamp", Query.Direction.DESCENDING)
-                .get()
-                .addOnSuccessListener(snapshot -> {
-                    List<Post> list = new ArrayList<>();
-                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                        Post post = doc.toObject(Post.class);
-                        if (post != null) {
-                            post.setId(doc.getId());
-                            list.add(post);
-                        }
+                .addSnapshotListener((snapshot, e) -> {
+                    if (e != null) {
+                        failureCallback.onFailure(e);
+                        return;
                     }
-                    successCallback.onSuccess(list);
-                })
-                .addOnFailureListener(failureCallback);
+
+                    if (snapshot != null) {
+                        List<Post> list = new ArrayList<>();
+                        for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                            Post post = doc.toObject(Post.class);
+                            if (post != null) {
+                                post.setId(doc.getId());
+                                list.add(post);
+                            }
+                        }
+                        successCallback.onSuccess(list);
+                    }
+                });
     }
 
     public void fetchCategories(OnSuccessListener<List<Category>> successCallback, OnFailureListener failureCallback) {
         db.collection("categories")
                 .orderBy("name", Query.Direction.ASCENDING)
-                .get()
-                .addOnSuccessListener(snapshot -> {
-                    List<Category> list = new ArrayList<>();
-                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                        Category category = doc.toObject(Category.class);
-                        if (category != null) {
-                            category.id = doc.getId();
-                            list.add(category);
-                        }
+                .addSnapshotListener((snapshot, e) -> { // Cũng có thể chuyển Category sang realtime nếu muốn
+                    if (e != null) {
+                        failureCallback.onFailure(e);
+                        return;
                     }
-                    successCallback.onSuccess(list);
-                })
-                .addOnFailureListener(failureCallback);
+                    if (snapshot != null) {
+                        List<Category> list = new ArrayList<>();
+                        for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                            Category category = doc.toObject(Category.class);
+                            if (category != null) {
+                                category.id = doc.getId();
+                                list.add(category);
+                            }
+                        }
+                        successCallback.onSuccess(list);
+                    }
+                });
     }
 
     // NEW: Fetch Comments with Realtime Listener

@@ -1,7 +1,8 @@
 package com.example.mobileapp_newhub.data.repository;
 
+import androidx.lifecycle.LiveData; // Import LiveData
 import com.example.mobileapp_newhub.model.Category;
-import com.example.mobileapp_newhub.model.Comment; // Import Comment
+import com.example.mobileapp_newhub.model.Comment;
 import com.example.mobileapp_newhub.model.Post;
 import java.util.List;
 
@@ -12,6 +13,8 @@ public interface Repository {
     void getCategories(boolean hasNetwork, OnRepositoryCallback<List<Category>> callback);
 
     void getPostDetail(String postId, OnRepositoryCallback<Post> callback);
+    
+    LiveData<Post> getPostLive(String postId);
 
     void toggleBookmark(String postId, OnRepositoryCallback<Boolean> callback);
 
